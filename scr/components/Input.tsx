@@ -14,11 +14,11 @@ interface InputProps {
 const colors = {
   primary: '#FFB6E1',
   secondary: '#A8D8FF',
-  background: '#FFFFFF',
-  surface: '#FAFAFA',
+  background: '#F5EEFF',
+  surface: '#FCF8FF',
   text: '#333333',
-  textLight: '#666666',
-  border: '#E0E0E0',
+  textLight: '#6F6785',
+  border: '#DCCEF7',
   error: '#FF6B6B',
 };
 
@@ -55,9 +55,9 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
     color: colors.text,
   },

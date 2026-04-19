@@ -2,17 +2,14 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import Input from '../../scr/components/Input';
 import LogoProEstoque from '../../scr/components/LogoProEstoque';
 
 const colors = {
-  primary: '#FFB6E1',
-  secondary: '#A8D8FF',
-  background: '#FFFFFF',
-  surface: '#FAFAFA',
-  text: '#333333',
-  textLight: '#666666',
-  border: '#E0E0E0',
+  primary: '#F4A7D8',
+  background: '#F6EEFF',
+  textLight: '#7A6C96',
   success: '#4CAF50',
 };
 
@@ -21,66 +18,55 @@ export default function RecuperarSenhaScreen() {
   const [success, setSuccess] = useState(false);
   const router = useRouter();
 
-  const handleEnviar = () => {
-    // Simular envio de e-mail
-    setSuccess(true);
-  };
-
-  const handleVoltarLogin = () => {
-    router.push('/login');
-  };
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.scrollContainer}>
           <View style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-              <LogoProEstoque />
-              <Text style={styles.title}>Recuperar Senha</Text>
-            </View>
+            <View style={styles.backgroundTop} />
+            <View style={styles.backgroundBottom} />
 
-            {!success ? (
-              <>
-                {/* Descrição */}
-                <Text style={styles.description}>
-                  Informe seu e-mail e enviaremos um link de recuperação
-                </Text>
+            <View style={styles.card}>
+              <View style={styles.header}>
+                <LogoProEstoque />
+                <Text style={styles.title}>Recuperar Senha</Text>
+              </View>
 
-                {/* Formulário */}
-                <View style={styles.form}>
-                  <Input
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                  />
+              {!success ? (
+                <>
+                  <Text style={styles.description}>
+                    Informe seu e-mail e enviaremos um link de recuperação.
+                  </Text>
 
-                  <TouchableOpacity style={styles.button} onPress={handleEnviar}>
-                    <Text style={styles.buttonText}>Enviar</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            ) : (
-              <>
-                {/* Mensagem de sucesso */}
+                  <View style={styles.form}>
+                    <Input
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChangeText={setEmail}
+                      keyboardType="email-address"
+                    />
+
+                    <TouchableOpacity style={styles.button} onPress={() => setSuccess(true)}>
+                      <Text style={styles.buttonText}>Enviar</Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              ) : (
                 <View style={styles.successContainer}>
-                  <Text style={styles.successIcon}>✅</Text>
+                  <Text style={styles.successBadge}>OK</Text>
                   <Text style={styles.successTitle}>E-mail enviado!</Text>
                   <Text style={styles.successMessage}>
                     Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
                   </Text>
 
-                  <TouchableOpacity style={styles.button} onPress={handleVoltarLogin}>
+                  <TouchableOpacity style={styles.button} onPress={() => router.push('/login')}>
                     <Text style={styles.buttonText}>Voltar ao Login</Text>
                   </TouchableOpacity>
                 </View>
-              </>
-            )}
+              )}
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -99,42 +85,72 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     justifyContent: 'center',
+    paddingVertical: 24,
   },
   container: {
     flex: 1,
     backgroundColor: colors.background,
+    overflow: 'hidden',
+    paddingHorizontal: 20,
+  },
+  backgroundTop: {
+    backgroundColor: '#E8D8FF',
+    borderRadius: 999,
+    height: 220,
+    position: 'absolute',
+    right: -60,
+    top: -30,
+    width: 220,
+  },
+  backgroundBottom: {
+    backgroundColor: '#FFDDF3',
+    borderRadius: 999,
+    bottom: -70,
+    height: 240,
+    left: -90,
+    position: 'absolute',
+    width: 240,
+  },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.76)',
+    borderColor: '#EFE4FF',
+    borderRadius: 28,
+    borderWidth: 1,
+    elevation: 8,
     paddingHorizontal: 24,
+    paddingVertical: 32,
+    shadowColor: '#9F7AEA',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 12,
+    marginBottom: 24,
   },
   title: {
+    color: colors.primary,
     fontSize: 32,
     fontWeight: '700',
-    color: colors.primary,
+    marginTop: 8,
   },
   description: {
-    fontSize: 16,
     color: colors.textLight,
-    textAlign: 'center',
-    marginBottom: 32,
+    fontSize: 16,
     lineHeight: 24,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   form: {
-    gap: 16,
+    gap: 10,
   },
   button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
     alignItems: 'center',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
+    marginTop: 12,
+    paddingVertical: 14,
     width: '100%',
-    marginTop: 16,
   },
   buttonText: {
     color: '#FFF',
@@ -143,23 +159,29 @@ const styles = StyleSheet.create({
   },
   successContainer: {
     alignItems: 'center',
-    paddingVertical: 40,
+    paddingVertical: 20,
   },
-  successIcon: {
-    fontSize: 64,
+  successBadge: {
+    backgroundColor: '#E8F8EC',
+    borderRadius: 999,
+    color: colors.success,
+    fontSize: 18,
+    fontWeight: '700',
     marginBottom: 16,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
   },
   successTitle: {
+    color: colors.success,
     fontSize: 24,
     fontWeight: '700',
-    color: colors.success,
     marginBottom: 12,
   },
   successMessage: {
-    fontSize: 16,
     color: colors.textLight,
-    textAlign: 'center',
+    fontSize: 16,
     lineHeight: 24,
-    marginBottom: 32,
+    marginBottom: 28,
+    textAlign: 'center',
   },
 });

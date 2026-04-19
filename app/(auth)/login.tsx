@@ -2,16 +2,16 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 import LogoProEstoque from '../../scr/components/LogoProEstoque';
 
 const colors = {
-  primary: '#FFB6E1',
-  secondary: '#A8D8FF',
-  background: '#FFFFFF',
-  surface: '#FAFAFA',
-  text: '#333333',
-  textLight: '#666666',
-  border: '#E0E0E0',
+  primary: '#F4A7D8',
+  background: '#F6EEFF',
+  surface: '#FFF9FF',
+  text: '#3F3654',
+  textLight: '#7A6C96',
+  border: '#DECEF6',
 };
 
 export default function LoginScreen() {
@@ -24,58 +24,62 @@ export default function LoginScreen() {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.keyboardAvoiding}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={styles.container}>
-          {/* Header rosinha */}
-          <View style={styles.header}>
-              <LogoProEstoque />            <Text style={styles.subtitle}>Gerenciador</Text>
-          </View>
-          {/* Formulário */}
-          <View style={styles.form}>
-            <View>
-              <Text style={styles.label}>Email</Text>
-              <View style={styles.emailInput}>
-                <Text style={styles.icon}>📧</Text>
-                <TextInput
-                  style={styles.inputWithIcon}
-                  placeholder="seu@email.com"
-                  placeholderTextColor={colors.textLight}
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
+          <View style={styles.backgroundTop} />
+          <View style={styles.backgroundBottom} />
+
+          <View style={styles.card}>
+            <View style={styles.header}>
+              <LogoProEstoque />
+              <Text style={styles.subtitle}>Gerenciador</Text>
             </View>
 
-            <View>
-              <Text style={styles.label}>Senha</Text>
-              <View style={styles.passwordInput}>
-                <TextInput
-                  style={styles.inputWithIcon}
-                  placeholder="Digite sua senha"
-                  placeholderTextColor={colors.textLight}
-                  secureTextEntry={!showPassword}
-                  value={password}
-                  onChangeText={setPassword}
-                />
-                <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                  <Text style={styles.icon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>
+            <View style={styles.form}>
+              <View>
+                <Text style={styles.label}>Email</Text>
+                <View style={styles.inputRow}>
+                  <Text style={styles.inputAdornment}>@</Text>
+                  <TextInput
+                    style={styles.inputWithIcon}
+                    placeholder="seu@email.com"
+                    placeholderTextColor={colors.textLight}
+                    keyboardType="email-address"
+                    value={email}
+                    onChangeText={setEmail}
+                  />
+                </View>
+              </View>
+
+              <View>
+                <Text style={styles.label}>Senha</Text>
+                <View style={styles.inputRow}>
+                  <TextInput
+                    style={styles.inputWithIcon}
+                    placeholder="Digite sua senha"
+                    placeholderTextColor={colors.textLight}
+                    secureTextEntry={!showPassword}
+                    value={password}
+                    onChangeText={setPassword}
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword((value) => !value)}>
+                    <Text style={styles.inputToggle}>{showPassword ? 'Ocultar' : 'Mostrar'}</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)')}>
+                <Text style={styles.buttonText}>Entrar</Text>
+              </TouchableOpacity>
+
+              <View style={styles.links}>
+                <TouchableOpacity onPress={() => router.push('/recuperar-senha')}>
+                  <Text style={styles.link}>Esqueceu a senha?</Text>
+                </TouchableOpacity>
+                <TouchableOpacity onPress={() => router.push('/cadastro')}>
+                  <Text style={styles.link}>Criar conta</Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)')}>
-              <Text style={styles.buttonText}>Entrar</Text>
-            </TouchableOpacity>
-
-            <View style={styles.links}>
-              <TouchableOpacity onPress={() => router.push('/recuperar-senha')}>
-                <Text style={styles.link}>Esqueceu senha?</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => router.push('/cadastro')}>
-                <Text style={styles.link}>Criar conta</Text>
-              </TouchableOpacity>
             </View>
           </View>
         </View>
@@ -96,81 +100,92 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
     justifyContent: 'center',
+    overflow: 'hidden',
+    paddingHorizontal: 20,
+  },
+  backgroundTop: {
+    backgroundColor: '#E8D8FF',
+    borderRadius: 999,
+    height: 220,
+    position: 'absolute',
+    right: -60,
+    top: -40,
+    width: 220,
+  },
+  backgroundBottom: {
+    backgroundColor: '#FFDDF3',
+    borderRadius: 999,
+    bottom: -80,
+    height: 250,
+    left: -90,
+    position: 'absolute',
+    width: 250,
+  },
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.76)',
+    borderColor: '#EFE4FF',
+    borderRadius: 28,
+    borderWidth: 1,
+    elevation: 8,
     paddingHorizontal: 24,
+    paddingVertical: 32,
+    shadowColor: '#9F7AEA',
+    shadowOffset: { width: 0, height: 14 },
+    shadowOpacity: 0.12,
+    shadowRadius: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
-  },
-  emoji: {
-    fontSize: 48,
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: colors.primary,
+    marginBottom: 30,
   },
   subtitle: {
-    fontSize: 14,
     color: colors.textLight,
-    marginTop: 4,
+    fontSize: 15,
+    fontWeight: '600',
+    marginTop: 8,
   },
   form: {
     gap: 16,
   },
   label: {
+    color: colors.text,
     fontSize: 14,
     fontWeight: '600',
-    color: colors.text,
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  input: {
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 16,
-    color: colors.text,
-  },
-  emailInput: {
-    flexDirection: 'row',
+  inputRow: {
     alignItems: 'center',
     backgroundColor: colors.surface,
-    borderWidth: 2,
     borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    borderRadius: 16,
+    borderWidth: 2,
+    flexDirection: 'row',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  inputAdornment: {
+    color: colors.textLight,
+    fontSize: 16,
+    fontWeight: '700',
   },
   inputWithIcon: {
+    color: colors.text,
     flex: 1,
     fontSize: 16,
-    color: colors.text,
     marginLeft: 8,
   },
-  icon: {
-    fontSize: 18,
-  },
-  passwordInput: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.border,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+  inputToggle: {
+    color: colors.textLight,
+    fontSize: 13,
+    fontWeight: '700',
   },
   button: {
-    backgroundColor: colors.primary,
-    paddingVertical: 12,
-    borderRadius: 8,
     alignItems: 'center',
-    width: '100%',
+    backgroundColor: colors.primary,
+    borderRadius: 16,
     marginTop: 16,
+    paddingVertical: 14,
+    width: '100%',
   },
   buttonText: {
     color: '#FFF',
@@ -179,13 +194,12 @@ const styles = StyleSheet.create({
   },
   links: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    marginTop: 20,
+    justifyContent: 'space-between',
+    marginTop: 22,
   },
   link: {
-    color: colors.secondary,
+    color: '#7A6AA6',
     fontSize: 14,
-    fontWeight: '500',
-    textDecorationLine: 'underline',
+    fontWeight: '600',
   },
 });
