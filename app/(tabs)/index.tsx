@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import { FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -18,6 +19,7 @@ import {
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
@@ -79,7 +81,7 @@ export default function HomeScreen() {
       )}
       ListHeaderComponent={
         <ThemedView style={styles.headerContent}>
-          <ThemedView style={styles.header}>
+          <ThemedView style={[styles.header, { paddingTop: insets.top + 20 }]}>
             <View style={styles.headerTop}>
               <View>
                 <ThemedText type="title">{`Ola, ${nomeUsuario}`}</ThemedText>
@@ -141,7 +143,8 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 24,
+    paddingBottom: 24,
+    paddingHorizontal: 24,
   },
   headerContent: {
     marginBottom: 16,

@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -35,6 +36,7 @@ export default function ProdutosScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('categorias');
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
@@ -118,7 +120,7 @@ export default function ProdutosScreen() {
       <ThemedView
         lightColor="#F8EFE6"
         darkColor="#32273F"
-        style={[styles.header, { borderBottomColor: palette.border }]}>
+        style={[styles.header, { borderBottomColor: palette.border, paddingTop: insets.top + 20 }]}>
         <View style={styles.headerTop}>
           <ThemedText type="title" style={styles.titulo}>
             Produtos
