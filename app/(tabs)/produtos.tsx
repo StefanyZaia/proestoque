@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
@@ -33,6 +34,7 @@ export default function ProdutosScreen() {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('categorias');
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
@@ -45,8 +47,6 @@ export default function ProdutosScreen() {
   }, [searchText, selectedCategory]);
 
   const secoesAgrupadas = useMemo<ProductSection[]>(() => {
-    const categoriaById = new Map(CATEGORIAS_MOCK.map((categoria) => [categoria.id, categoria]));
-
     return CATEGORIAS_MOCK.map((categoria) => ({
       title: categoria.nome,
       categoria,
@@ -76,11 +76,7 @@ export default function ProdutosScreen() {
       <ThemedView
         lightColor="#FFF8F1"
         darkColor="#3A2E4A"
-        style={[
-          styles.produtoCard,
-          { borderColor: palette.border },
-          compact && styles.produtoCardCompact,
-        ]}>
+        style={[styles.produtoCard, { borderColor: palette.border }, compact && styles.produtoCardCompact]}>
         <View style={styles.produtoHeader}>
           <ThemedText style={styles.produtoNome}>{item.nome}</ThemedText>
           <View style={[styles.badge, { backgroundColor: cor }]}>
@@ -119,10 +115,20 @@ export default function ProdutosScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ThemedView lightColor="#F8EFE6" darkColor="#32273F" style={[styles.header, { borderBottomColor: palette.border }]}>
-        <ThemedText type="title" style={styles.titulo}>
-          Produtos
-        </ThemedText>
+      <ThemedView
+        lightColor="#F8EFE6"
+        darkColor="#32273F"
+        style={[styles.header, { borderBottomColor: palette.border }]}>
+        <View style={styles.headerTop}>
+          <ThemedText type="title" style={styles.titulo}>
+            Produtos
+          </ThemedText>
+          <TouchableOpacity
+            onPress={() => router.push('/modal')}
+            style={[styles.addButton, { backgroundColor: palette.tint }]}>
+            <ThemedText style={styles.addButtonText}>+</ThemedText>
+          </TouchableOpacity>
+        </View>
 
         <TextInput
           style={[
@@ -247,8 +253,27 @@ const styles = StyleSheet.create({
     padding: 24,
     paddingBottom: 16,
   },
+  headerTop: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
   titulo: {
     marginBottom: 16,
+  },
+  addButton: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 40,
+    justifyContent: 'center',
+    marginBottom: 16,
+    width: 40,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 24,
   },
   searchInput: {
     borderRadius: 14,

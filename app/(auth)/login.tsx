@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { setLoggedIn } from '@/lib/session';
 import LogoProEstoque from '../../scr/components/LogoProEstoque';
 
 const colors = {
@@ -68,7 +69,12 @@ export default function LoginScreen() {
                 </View>
               </View>
 
-              <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)')}>
+              <TouchableOpacity
+                style={styles.button}
+                onPress={() => {
+                  setLoggedIn(true);
+                  router.replace('/');
+                }}>
                 <Text style={styles.buttonText}>Entrar</Text>
               </TouchableOpacity>
 

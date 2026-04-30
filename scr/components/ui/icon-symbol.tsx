@@ -1,16 +1,18 @@
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
+import { StyleProp, TextStyle } from 'react-native';
 import { useColorScheme } from '../../../hooks/use-color-scheme';
 
 interface IconSymbolProps {
   name: keyof typeof Ionicons.glyphMap;
   size?: number;
   color?: string;
+  style?: StyleProp<TextStyle>;
 }
 
-export function IconSymbol({ name, size = 24, color }: IconSymbolProps) {
+export function IconSymbol({ name, size = 24, color, style }: IconSymbolProps) {
   const colorScheme = useColorScheme();
   const defaultColor = color || (colorScheme === 'dark' ? '#fff' : '#000');
 
-  return <Ionicons name={name} size={size} color={defaultColor} />;
+  return <Ionicons name={name} size={size} color={defaultColor} style={style} />;
 }

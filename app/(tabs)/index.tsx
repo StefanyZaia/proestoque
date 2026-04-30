@@ -1,5 +1,6 @@
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -11,10 +12,12 @@ import {
   getProdutosComEstoqueBaixo,
   getValorTotalEstoque,
   PRODUTOS_MOCK,
+  type Produto,
 } from '@/scr/data/mockData';
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const palette = Colors[colorScheme ?? 'light'];
 
@@ -77,10 +80,17 @@ export default function HomeScreen() {
       ListHeaderComponent={
         <ThemedView style={styles.headerContent}>
           <ThemedView style={styles.header}>
-            <ThemedText type="title">{`Ola, ${nomeUsuario}`}</ThemedText>
-            <ThemedText>{dataHoje}</ThemedText>
-            <ThemedText type="defaultSemiBold">
-            </ThemedText>
+            <View style={styles.headerTop}>
+              <View>
+                <ThemedText type="title">{`Ola, ${nomeUsuario}`}</ThemedText>
+                <ThemedText>{dataHoje}</ThemedText>
+              </View>
+              <TouchableOpacity
+                onPress={() => router.push('/modal')}
+                style={[styles.addButton, { backgroundColor: palette.tint }]}>
+                <ThemedText style={styles.addButtonText}>+</ThemedText>
+              </TouchableOpacity>
+            </View>
           </ThemedView>
 
           <View style={styles.grid}>
@@ -91,6 +101,29 @@ export default function HomeScreen() {
               </ThemedView>
             ))}
           </View>
+
+          {produtosComEstoqueBaixo.length > 0 ? (
+            <ThemedView
+              lightColor="#FFF4F6"
+              darkColor="#452B3C"
+              style={[styles.criticalCard, { borderColor: palette.border }]}>
+              <ThemedText type="defaultSemiBold" style={styles.criticalTitle}>
+                Estoque critico
+              </ThemedText>
+              {produtosComEstoqueBaixo.map((produto: Produto) => (
+                <View key={produto.id} style={styles.criticalItem}>
+                  <ThemedText style={styles.criticalName}>{produto.nome}</ThemedText>
+                  <ThemedText style={styles.criticalMeta}>
+                    {produto.quantidade} {produto.unidade} de {produto.quantidadeMinima} min.
+                  </ThemedText>
+                </View>
+              ))}
+            </ThemedView>
+          ) : null}
+
+          <ThemedText type="defaultSemiBold" style={styles.sectionTitle}>
+            Produtos recentes
+          </ThemedText>
         </ThemedView>
       }
       refreshControl={
@@ -114,9 +147,29 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   header: {
-    alignItems: 'center',
-    gap: 6,
     marginBottom: 16,
+  },
+  headerTop: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  addButton: {
+    alignItems: 'center',
+    borderRadius: 16,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  addButtonText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  sectionTitle: {
+    marginBottom: 12,
   },
   grid: {
     flexDirection: 'row',
@@ -139,6 +192,25 @@ const styles = StyleSheet.create({
   titulo: {
     fontSize: 12,
     textAlign: 'center',
+  },
+  criticalCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    marginBottom: 18,
+    padding: 16,
+  },
+  criticalTitle: {
+    marginBottom: 12,
+  },
+  criticalItem: {
+    marginBottom: 10,
+  },
+  criticalName: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  criticalMeta: {
+    fontSize: 12,
   },
   produtoItem: {
     borderRadius: 12,
