@@ -7,6 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useAuth } from '@/scr/contexts/AuthContext';
 import {
   CATEGORIAS_MOCK,
   formatarPreco,
@@ -21,12 +22,17 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
+  const { user } = useAuth();
   const palette = Colors[colorScheme ?? 'light'];
 
-  const nomeUsuario = 'Stefy';
+  const nomeUsuario = user?.nome ?? 'Usuario';
   const dataHoje = new Date().toLocaleDateString('pt-BR');
+  const horaAtual = new Date().getHours();
   const produtosComEstoqueBaixo = getProdutosComEstoqueBaixo();
   const produtosRecentes = PRODUTOS_MOCK.slice(-5).reverse();
+  const saudacao =
+    horaAtual < 12 ? 'Bom dia' : horaAtual < 18 ? 'Boa tarde' : 'Boa noite';
+  const inicialUsuario = nomeUsuario.charAt(0).toUpperCase();
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -83,9 +89,18 @@ export default function HomeScreen() {
         <ThemedView style={styles.headerContent}>
           <ThemedView style={[styles.header, { paddingTop: insets.top + 20 }]}>
             <View style={styles.headerTop}>
-              <View>
-                <ThemedText type="title">{`Ola, ${nomeUsuario}`}</ThemedText>
-                <ThemedText>{dataHoje}</ThemedText>
+              <View style={styles.userBlock}>
+                <View style={styles.userTextBlock}>
+                  <ThemedText style={styles.greeting}>{saudacao}</ThemedText>
+                  <ThemedText type="title">{nomeUsuario}</ThemedText>
+                  <ThemedText>{dataHoje}</ThemedText>
+                </View>
+                <ThemedView
+                  lightColor="#F0DED1"
+                  darkColor="#4A3A5E"
+                  style={[styles.avatar, { borderColor: palette.border }]}>
+                  <ThemedText style={styles.avatarText}>{inicialUsuario}</ThemedText>
+                </ThemedView>
               </View>
               <TouchableOpacity
                 onPress={() => router.push('/modal')}
@@ -157,6 +172,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     width: '100%',
+  },
+  userBlock: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: 12,
+  },
+  userTextBlock: {
+    gap: 2,
+  },
+  greeting: {
+    fontSize: 14,
+  },
+  avatar: {
+    alignItems: 'center',
+    borderRadius: 20,
+    borderWidth: 1,
+    height: 40,
+    justifyContent: 'center',
+    width: 40,
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '700',
   },
   addButton: {
     alignItems: 'center',

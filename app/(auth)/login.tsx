@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { setLoggedIn } from '@/lib/session';
+import { useAuth } from '@/scr/contexts/AuthContext';
 import LogoProEstoque from '../../scr/components/LogoProEstoque';
 
 const colors = {
@@ -20,6 +20,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
+  const { login, isLoading } = useAuth();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -70,12 +71,12 @@ export default function LoginScreen() {
               </View>
 
               <TouchableOpacity
-                style={styles.button}
-                onPress={() => {
-                  setLoggedIn(true);
-                  router.replace('/');
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                disabled={isLoading}
+                onPress={async () => {
+                  await login(email, password);
                 }}>
-                <Text style={styles.buttonText}>Entrar</Text>
+                <Text style={styles.buttonText}>{isLoading ? 'Entrando...' : 'Entrar'}</Text>
               </TouchableOpacity>
 
               <View style={styles.links}>
@@ -192,6 +193,9 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingVertical: 14,
     width: '100%',
+  },
+  buttonDisabled: {
+    opacity: 0.7,
   },
   buttonText: {
     color: '#FFF',

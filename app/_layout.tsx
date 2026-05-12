@@ -1,11 +1,14 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppThemeProvider } from '@/providers/app-theme-provider';
+import { AuthProvider, useAuth } from '@/scr/contexts/AuthContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
@@ -38,6 +41,50 @@ const navigationTheme = {
   },
 };
 
+function NavigationGuard() {
+  const { isAuthenticated, isLoading } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    if (isLoading) {
+      return;
+    }
+
+    const inAuthGroup = segments[0] === '(auth)';
+
+    if (!isAuthenticated && !inAuthGroup) {
+      router.replace('/login');
+      return;
+    }
+
+    if (isAuthenticated && inAuthGroup) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, isLoading, router, segments]);
+
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          styles.loadingContainer,
+          {
+            backgroundColor:
+              colorScheme === 'dark' ? Colors.dark.background : Colors.light.background,
+          },
+        ]}>
+        <ActivityIndicator
+          size="large"
+          color={colorScheme === 'dark' ? Colors.dark.tint : Colors.light.tint}
+        />
+      </View>
+    );
+  }
+
+  return null;
+}
+
 function RootNavigation() {
   const colorScheme = useColorScheme();
 
@@ -45,6 +92,7 @@ function RootNavigation() {
     <ThemeProvider
       key={colorScheme}
       value={colorScheme === 'dark' ? navigationTheme.dark : navigationTheme.light}>
+      <NavigationGuard />
       <Stack>
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -57,8 +105,23 @@ function RootNavigation() {
 
 export default function RootLayout() {
   return (
-    <AppThemeProvider>
-      <RootNavigation />
-    </AppThemeProvider>
+    <AuthProvider>
+      <AppThemeProvider>
+        <RootNavigation />
+      </AppThemeProvider>
+    </AuthProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    alignItems: 'center',
+    bottom: 0,
+    justifyContent: 'center',
+    left: 0,
+    position: 'absolute',
+    right: 0,
+    top: 0,
+    zIndex: 10,
+  },
+});

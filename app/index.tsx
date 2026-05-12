@@ -1,6 +1,12 @@
 import { Redirect } from 'expo-router';
-import { isLoggedIn } from '@/lib/session';
+import { useAuth } from '@/scr/contexts/AuthContext';
 
 export default function Index() {
-  return <Redirect href={isLoggedIn() ? '/(tabs)' : '/login'} />;
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return null;
+  }
+
+  return <Redirect href={isAuthenticated ? '/(tabs)' : '/login'} />;
 }
