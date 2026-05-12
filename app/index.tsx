@@ -2,9 +2,9 @@ import { Redirect } from 'expo-router';
 import { useAuth } from '@/scr/contexts/AuthContext';
 
 export default function Index() {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isBootstrapping } = useAuth();
 
-  if (isLoading) {
+  if (isBootstrapping) {
     return null;
   }
 

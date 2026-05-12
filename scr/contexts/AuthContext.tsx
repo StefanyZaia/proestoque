@@ -2,6 +2,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
 
 const AUTH_STORAGE_KEY = '@proestoque/auth';
+let hasBootstrappedAuth = false;
+let cachedAuthSession: { user: User | null; token: string | null } = {
+  user: null,
+  token: null,
+};
 
 export type User = {
   id: string;
@@ -13,6 +18,7 @@ export type AuthContextType = {
   user: User | null;
   token: string | null;
   isLoading: boolean;
+  isBootstrapping: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -21,23 +27,40 @@ export type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: PropsWithChildren) {
-  const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(cachedAuthSession.user);
+  const [token, setToken] = useState<string | null>(cachedAuthSession.token);
+  const [isLoading, setIsLoading] = useState(!hasBootstrappedAuth);
+  const [isBootstrapping, setIsBootstrapping] = useState(!hasBootstrappedAuth);
 
   useEffect(() => {
+    if (hasBootstrappedAuth) {
+      return;
+    }
+
     const restoreSession = async () => {
+      const minimumSplashDelay = new Promise((resolve) => setTimeout(resolve, 2600));
+
       try {
-        const storedSession = await AsyncStorage.getItem(AUTH_STORAGE_KEY);
+        const [storedSession] = await Promise.all([
+          AsyncStorage.getItem(AUTH_STORAGE_KEY),
+          minimumSplashDelay,
+        ]);
 
         if (storedSession) {
           const parsedSession = JSON.parse(storedSession) as { user: User; token: string };
+          cachedAuthSession = {
+            user: parsedSession.user,
+            token: parsedSession.token,
+          };
           setUser(parsedSession.user);
           setToken(parsedSession.token);
         }
       } catch (error) {
         console.warn('Falha ao restaurar sessao', error);
+        await minimumSplashDelay;
       } finally {
+        hasBootstrappedAuth = true;
+        setIsBootstrapping(false);
         setIsLoading(false);
       }
     };
@@ -68,6 +91,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
       })
     );
 
+    cachedAuthSession = {
+      user: loggedUser,
+      token: authToken,
+    };
     setUser(loggedUser);
     setToken(authToken);
     setIsLoading(false);
@@ -76,6 +103,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const logout = async () => {
     setIsLoading(true);
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+    cachedAuthSession = {
+      user: null,
+      token: null,
+    };
     setUser(null);
     setToken(null);
     setIsLoading(false);
@@ -86,11 +117,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
       user,
       token,
       isLoading,
+      isBootstrapping,
       isAuthenticated: !!token,
       login,
       logout,
     }),
-    [user, token, isLoading]
+    [user, token, isLoading, isBootstrapping]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
