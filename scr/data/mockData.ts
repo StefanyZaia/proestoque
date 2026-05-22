@@ -12,11 +12,13 @@ export type Categoria = {
 export type Produto = {
   id: string;
   nome: string;
+  fotoUri?: string;
   categoriaId: string;
   quantidade: number;
   quantidadeMinima: number; // Abaixo disso = alerta de estoque baixo
   preco: number;
   unidade: string;          // "un", "kg", "cx", "L"
+  observacao?: string;
   ultimaMovimentacao: string; // ISO date string
 };
 

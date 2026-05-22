@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 
@@ -9,6 +10,9 @@ interface InputProps {
   keyboardType?: 'default' | 'email-address' | 'numeric' | 'phone-pad';
   secureTextEntry?: boolean;
   style?: any;
+  leftIcon?: string;
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  autoCorrect?: boolean;
 }
 
 const colors = {
@@ -30,18 +34,26 @@ export default function Input({
   keyboardType = 'default',
   secureTextEntry = false,
   style,
+  leftIcon,
+  autoCapitalize = 'none',
+  autoCorrect = false,
 }: InputProps) {
   return (
     <View style={styles.container}>
-      <TextInput
-        style={[styles.input, error && styles.inputError, style]}
-        placeholder={placeholder}
-        placeholderTextColor={colors.textLight}
-        keyboardType={keyboardType}
-        secureTextEntry={secureTextEntry}
-        value={value}
-        onChangeText={onChangeText}
-      />
+      <View style={styles.row}>
+        {leftIcon && <Ionicons name={leftIcon as any} size={18} color={colors.textLight} style={styles.icon} />}
+        <TextInput
+          style={[styles.input, leftIcon && { paddingLeft: 0 }, error && styles.inputError, style]}
+          placeholder={placeholder}
+          placeholderTextColor={colors.textLight}
+          keyboardType={keyboardType}
+          secureTextEntry={secureTextEntry}
+          value={value}
+          onChangeText={onChangeText}
+          autoCapitalize={autoCapitalize}
+          autoCorrect={autoCorrect}
+        />
+      </View>
       {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
@@ -51,7 +63,15 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: 16,
   },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  icon: {
+    marginRight: 8,
+  },
   input: {
+    flex: 1,
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.border,

@@ -7,8 +7,9 @@ import 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppThemeProvider } from '@/providers/app-theme-provider';
-import { AuthProvider, useAuth } from '@/scr/contexts/AuthContext';
 import SplashScreen from '@/scr/components/SplashScreen';
+import { AuthProvider, useAuth } from '@/scr/contexts/AuthContext';
+import { ProductsProvider } from '@/scr/contexts/ProductsContext';
 
 const navigationTheme = {
   light: {
@@ -66,9 +67,11 @@ function RootNavigation() {
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <AppThemeProvider>
-        <RootNavigation />
-      </AppThemeProvider>
+      <ProductsProvider>
+        <AppThemeProvider>
+          <RootNavigation />
+        </AppThemeProvider>
+      </ProductsProvider>
     </AuthProvider>
   );
 }

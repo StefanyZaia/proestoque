@@ -8,12 +8,10 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/scr/contexts/AuthContext';
+import { useProducts } from '@/scr/contexts/ProductsContext';
 import {
   CATEGORIAS_MOCK,
   formatarPreco,
-  getProdutosComEstoqueBaixo,
-  getValorTotalEstoque,
-  PRODUTOS_MOCK,
   type Produto,
 } from '@/scr/data/mockData';
 
@@ -23,13 +21,26 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const { user } = useAuth();
+  const { produtos } = useProducts();
   const palette = Colors[colorScheme ?? 'light'];
 
   const nomeUsuario = user?.nome ?? 'Usuario';
   const dataHoje = new Date().toLocaleDateString('pt-BR');
   const horaAtual = new Date().getHours();
-  const produtosComEstoqueBaixo = getProdutosComEstoqueBaixo();
-  const produtosRecentes = PRODUTOS_MOCK.slice(-5).reverse();
+  const produtosComEstoqueBaixo = produtos.filter(
+    (produto) => produto.quantidade < produto.quantidadeMinima
+  );
+  const produtosRecentes = [...produtos]
+    .sort(
+      (primeiro, segundo) =>
+        new Date(segundo.ultimaMovimentacao).getTime() -
+        new Date(primeiro.ultimaMovimentacao).getTime()
+    )
+    .slice(0, 5);
+  const valorTotalEstoque = produtos.reduce(
+    (total, produto) => total + produto.quantidade * produto.preco,
+    0
+  );
   const saudacao =
     horaAtual < 12 ? 'Bom dia' : horaAtual < 18 ? 'Boa tarde' : 'Boa noite';
   const inicialUsuario = nomeUsuario.charAt(0).toUpperCase();
@@ -45,7 +56,7 @@ export default function HomeScreen() {
     {
       id: 'total',
       titulo: 'Total de Produtos',
-      valor: PRODUTOS_MOCK.length.toString(),
+      valor: produtos.length.toString(),
       cor: colorScheme === 'dark' ? '#4A3A5E' : '#F0DED1',
     },
     {
@@ -63,7 +74,7 @@ export default function HomeScreen() {
     {
       id: 'valor',
       titulo: 'Valor Total',
-      valor: formatarPreco(getValorTotalEstoque()),
+      valor: formatarPreco(valorTotalEstoque),
       cor: colorScheme === 'dark' ? '#355148' : '#E6EFE4',
     },
   ];
@@ -103,7 +114,7 @@ export default function HomeScreen() {
                 </ThemedView>
               </View>
               <TouchableOpacity
-                onPress={() => router.push('/modal')}
+                onPress={() => router.push('/produtos/novo' as never)}
                 style={[styles.addButton, { backgroundColor: palette.tint }]}>
                 <ThemedText style={styles.addButtonText}>+</ThemedText>
               </TouchableOpacity>

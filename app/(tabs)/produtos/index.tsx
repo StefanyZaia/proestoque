@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useMemo, useState } from 'react';
 import {
   FlatList,
+  Image,
   ScrollView,
   SectionList,
   StyleSheet,
@@ -15,10 +16,10 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useProducts } from '@/scr/contexts/ProductsContext';
 import {
   CATEGORIAS_MOCK,
   formatarPreco,
-  PRODUTOS_MOCK,
   type Categoria,
   type Produto,
 } from '@/scr/data/mockData';
@@ -38,15 +39,16 @@ export default function ProdutosScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
+  const { produtos } = useProducts();
   const palette = Colors[colorScheme ?? 'light'];
 
   const produtosFiltrados = useMemo(() => {
-    return PRODUTOS_MOCK.filter((produto) => {
+    return produtos.filter((produto) => {
       const matchesSearch = produto.nome.toLowerCase().includes(searchText.toLowerCase());
       const matchesCategory = selectedCategory ? produto.categoriaId === selectedCategory : true;
       return matchesSearch && matchesCategory;
     });
-  }, [searchText, selectedCategory]);
+  }, [produtos, searchText, selectedCategory]);
 
   const secoesAgrupadas = useMemo<ProductSection[]>(() => {
     return CATEGORIAS_MOCK.map((categoria) => ({
@@ -71,6 +73,10 @@ export default function ProdutosScreen() {
     return { status: 'Normal', cor: '#DDF4E4', textoCor: '#478A64' };
   };
 
+  const handleOpenProduto = (produtoId: string) => {
+    router.push((`/produtos/${produtoId}`) as never);
+  };
+
   const renderProdutoCard = (item: Produto, compact = false) => {
     const { status, cor, textoCor } = getStatusProduto(item);
 
@@ -78,8 +84,19 @@ export default function ProdutosScreen() {
       <ThemedView
         lightColor="#FFF8F1"
         darkColor="#3A2E4A"
-        style={[styles.produtoCard, { borderColor: palette.border }, compact && styles.produtoCardCompact]}>
+        style={[
+          styles.produtoCard,
+          { borderColor: palette.border },
+          compact && styles.produtoCardCompact,
+        ]}>
         <View style={styles.produtoHeader}>
+          {item.fotoUri ? (
+            <Image source={{ uri: item.fotoUri }} style={styles.produtoThumb} />
+          ) : (
+            <View style={[styles.produtoThumbPlaceholder, { borderColor: palette.border }]}>
+              <ThemedText style={styles.produtoThumbPlaceholderText}>IMG</ThemedText>
+            </View>
+          )}
           <ThemedText style={styles.produtoNome}>{item.nome}</ThemedText>
           <View style={[styles.badge, { backgroundColor: cor }]}>
             <ThemedText style={[styles.badgeText, { color: textoCor }]}>{status}</ThemedText>
@@ -92,7 +109,9 @@ export default function ProdutosScreen() {
         <ThemedText style={styles.produtoMeta}>{formatarPreco(item.preco)}</ThemedText>
         {!compact ? (
           <>
-            <ThemedText style={styles.produtoCategoria}>Categoria: {getCategoria(item.categoriaId)}</ThemedText>
+            <ThemedText style={styles.produtoCategoria}>
+              Categoria: {getCategoria(item.categoriaId)}
+            </ThemedText>
             <ThemedText style={styles.produtoMeta}>
               Ultima mov.: {new Date(item.ultimaMovimentacao).toLocaleDateString('pt-BR')}
             </ThemedText>
@@ -105,14 +124,19 @@ export default function ProdutosScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <ThemedText style={styles.emptyText}>Nenhum produto encontrado</ThemedText>
-      <ThemedText style={styles.emptySubtext}>Tente ajustar a busca, a categoria ou o modo de visualizacao.</ThemedText>
+      <ThemedText style={styles.emptySubtext}>
+        Tente ajustar a busca, a categoria ou o modo de visualizacao.
+      </ThemedText>
     </View>
   );
 
   const renderFlatItem = ({ item }: { item: Produto }) => (
-    <View style={viewMode === 'grade' ? styles.gridItemWrapper : undefined}>
+    <TouchableOpacity
+      activeOpacity={0.88}
+      onPress={() => handleOpenProduto(item.id)}
+      style={viewMode === 'grade' ? styles.gridItemWrapper : undefined}>
       {renderProdutoCard(item, viewMode === 'grade')}
-    </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -126,7 +150,7 @@ export default function ProdutosScreen() {
             Produtos
           </ThemedText>
           <TouchableOpacity
-            onPress={() => router.push('/modal')}
+            onPress={() => router.push('/produtos/novo' as never)}
             style={[styles.addButton, { backgroundColor: palette.tint }]}>
             <ThemedText style={styles.addButtonText}>+</ThemedText>
           </TouchableOpacity>
@@ -176,7 +200,10 @@ export default function ProdutosScreen() {
           })}
         </View>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.chipsContainer}>
           <TouchableOpacity
             style={[
               styles.chip,
@@ -201,7 +228,9 @@ export default function ProdutosScreen() {
                   borderColor: palette.border,
                 },
               ]}
-              onPress={() => setSelectedCategory(categoria.id)}>
+              onPress={() =>
+                setSelectedCategory((current) => (current === categoria.id ? null : categoria.id))
+              }>
               <ThemedText style={[styles.chipText, selectedCategory === categoria.id && styles.chipTextSelected]}>
                 {categoria.nome}
               </ThemedText>
@@ -214,7 +243,11 @@ export default function ProdutosScreen() {
         <SectionList
           sections={secoesAgrupadas}
           keyExtractor={(item) => item.id}
-          renderItem={({ item }) => renderProdutoCard(item)}
+          renderItem={({ item }) => (
+            <TouchableOpacity activeOpacity={0.88} onPress={() => handleOpenProduto(item.id)}>
+              {renderProdutoCard(item)}
+            </TouchableOpacity>
+          )}
           renderSectionHeader={({ section }) => (
             <ThemedView
               lightColor="#F7EFE5"
@@ -242,6 +275,13 @@ export default function ProdutosScreen() {
           showsVerticalScrollIndicator={false}
         />
       )}
+
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPress={() => router.push('/produtos/novo' as never)}
+        style={[styles.fab, { backgroundColor: palette.tint }]}>
+        <ThemedText style={styles.fabText}>+</ThemedText>
+      </TouchableOpacity>
     </ThemedView>
   );
 }
@@ -345,6 +385,24 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
+  produtoThumb: {
+    borderRadius: 12,
+    height: 46,
+    width: 46,
+  },
+  produtoThumbPlaceholder: {
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 12,
+    borderWidth: 1,
+    height: 46,
+    justifyContent: 'center',
+    width: 46,
+  },
+  produtoThumbPlaceholderText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
   produtoNome: {
     flex: 1,
     fontSize: 16,
@@ -392,5 +450,29 @@ const styles = StyleSheet.create({
   emptySubtext: {
     fontSize: 14,
     textAlign: 'center',
+  },
+  fab: {
+    alignItems: 'center',
+    borderRadius: 28,
+    bottom: 24,
+    elevation: 6,
+    height: 56,
+    justifyContent: 'center',
+    position: 'absolute',
+    right: 24,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    width: 56,
+  },
+  fabText: {
+    color: '#FFFFFF',
+    fontSize: 28,
+    fontWeight: '700',
+    lineHeight: 28,
   },
 });
