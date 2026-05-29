@@ -8,13 +8,18 @@ import {
   useState,
 } from 'react';
 
-import { api, AUTH_STORAGE_KEY } from '@/services/api';
+import { api, AUTH_STORAGE_KEY, setAuthSessionChangeHandler } from '@/services/api';
 
 let hasBootstrappedAuth = false;
 
-let cachedAuthSession: { user: User | null; token: string | null } = {
+let cachedAuthSession: {
+  user: User | null;
+  token: string | null;
+  refreshToken: string | null;
+} = {
   user: null,
   token: null,
+  refreshToken: null,
 };
 
 export type User = {
@@ -25,8 +30,15 @@ export type User = {
 
 type AuthResponse = {
   token: string;
+  refreshToken?: string;
   user?: User;
   usuario?: User;
+};
+
+type StoredAuthSession = {
+  user?: User | null;
+  token?: string | null;
+  refreshToken?: string | null;
 };
 
 export type AuthContextType = {
@@ -48,23 +60,54 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(!hasBootstrappedAuth);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasBootstrappedAuth);
 
-  async function salvarSessao(loggedUser: User, authToken: string) {
-    await AsyncStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        user: loggedUser,
-        token: authToken,
-      })
-    );
+  function aplicarSessao(session: StoredAuthSession) {
+    const nextUser = session.user ?? null;
+    const nextToken = session.token ?? null;
+    const nextRefreshToken = session.refreshToken ?? null;
 
     cachedAuthSession = {
-      user: loggedUser,
-      token: authToken,
+      user: nextUser,
+      token: nextToken,
+      refreshToken: nextRefreshToken,
     };
 
-    setUser(loggedUser);
-    setToken(authToken);
+    setUser(nextUser);
+    setToken(nextToken);
   }
+
+  function limparSessaoLocal() {
+    aplicarSessao({
+      user: null,
+      token: null,
+      refreshToken: null,
+    });
+  }
+
+  async function salvarSessao(loggedUser: User, authToken: string, refreshToken: string) {
+    const session = {
+      user: loggedUser,
+      token: authToken,
+      refreshToken,
+    };
+
+    await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
+    aplicarSessao(session);
+  }
+
+  useEffect(() => {
+    setAuthSessionChangeHandler((session) => {
+      if (!session?.token || !session.user) {
+        limparSessaoLocal();
+        return;
+      }
+
+      aplicarSessao(session as StoredAuthSession);
+    });
+
+    return () => {
+      setAuthSessionChangeHandler(null);
+    };
+  }, []);
 
   useEffect(() => {
     if (hasBootstrappedAuth) {
@@ -81,18 +124,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
         ]);
 
         if (storedSession) {
-          const parsedSession = JSON.parse(storedSession) as {
-            user: User;
-            token: string;
-          };
+          const parsedSession = JSON.parse(storedSession) as StoredAuthSession;
 
-          cachedAuthSession = {
-            user: parsedSession.user,
-            token: parsedSession.token,
-          };
-
-          setUser(parsedSession.user);
-          setToken(parsedSession.token);
+          aplicarSessao(parsedSession);
         }
       } catch (error) {
         console.warn('Falha ao restaurar sessao', error);
@@ -120,12 +154,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       const loggedUser = response.data.user ?? response.data.usuario;
       const authToken = response.data.token;
+      const refreshToken = response.data.refreshToken;
 
-      if (!loggedUser || !authToken) {
-        throw new Error('Resposta inválida do servidor ao fazer login.');
+      if (!loggedUser || !authToken || !refreshToken) {
+        throw new Error('Resposta invalida do servidor ao fazer login.');
       }
 
-      await salvarSessao(loggedUser, authToken);
+      await salvarSessao(loggedUser, authToken, refreshToken);
     } finally {
       setIsLoading(false);
     }
@@ -145,9 +180,10 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
       const loggedUser = response.data.user ?? response.data.usuario;
       const authToken = response.data.token;
+      const refreshToken = response.data.refreshToken;
 
-      if (loggedUser && authToken) {
-        await salvarSessao(loggedUser, authToken);
+      if (loggedUser && authToken && refreshToken) {
+        await salvarSessao(loggedUser, authToken, refreshToken);
         return;
       }
 
@@ -161,14 +197,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     setIsLoading(true);
 
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
-
-    cachedAuthSession = {
-      user: null,
-      token: null,
-    };
-
-    setUser(null);
-    setToken(null);
+    limparSessaoLocal();
     setIsLoading(false);
   };
 
