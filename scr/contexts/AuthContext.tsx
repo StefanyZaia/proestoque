@@ -1,8 +1,17 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, PropsWithChildren, useContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  PropsWithChildren,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
-const AUTH_STORAGE_KEY = '@proestoque/auth';
+import { api, AUTH_STORAGE_KEY } from '@/services/api';
+
 let hasBootstrappedAuth = false;
+
 let cachedAuthSession: { user: User | null; token: string | null } = {
   user: null,
   token: null,
@@ -14,6 +23,12 @@ export type User = {
   email: string;
 };
 
+type AuthResponse = {
+  token: string;
+  user?: User;
+  usuario?: User;
+};
+
 export type AuthContextType = {
   user: User | null;
   token: string | null;
@@ -21,6 +36,7 @@ export type AuthContextType = {
   isBootstrapping: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
+  registrar: (nome: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -31,6 +47,24 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [token, setToken] = useState<string | null>(cachedAuthSession.token);
   const [isLoading, setIsLoading] = useState(!hasBootstrappedAuth);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasBootstrappedAuth);
+
+  async function salvarSessao(loggedUser: User, authToken: string) {
+    await AsyncStorage.setItem(
+      AUTH_STORAGE_KEY,
+      JSON.stringify({
+        user: loggedUser,
+        token: authToken,
+      })
+    );
+
+    cachedAuthSession = {
+      user: loggedUser,
+      token: authToken,
+    };
+
+    setUser(loggedUser);
+    setToken(authToken);
+  }
 
   useEffect(() => {
     if (hasBootstrappedAuth) {
@@ -47,11 +81,16 @@ export function AuthProvider({ children }: PropsWithChildren) {
         ]);
 
         if (storedSession) {
-          const parsedSession = JSON.parse(storedSession) as { user: User; token: string };
+          const parsedSession = JSON.parse(storedSession) as {
+            user: User;
+            token: string;
+          };
+
           cachedAuthSession = {
             user: parsedSession.user,
             token: parsedSession.token,
           };
+
           setUser(parsedSession.user);
           setToken(parsedSession.token);
         }
@@ -68,45 +107,66 @@ export function AuthProvider({ children }: PropsWithChildren) {
     restoreSession();
   }, []);
 
-  const login = async (email: string, _password: string) => {
+  const login = async (email: string, password: string) => {
     setIsLoading(true);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
 
-    const normalizedEmail = email.trim().toLowerCase();
-    const derivedName = normalizedEmail.split('@')[0] || 'Usuario';
+      const response = await api.post<AuthResponse>('/auth/login', {
+        email: normalizedEmail,
+        senha: password,
+      });
 
-    const loggedUser: User = {
-      id: 'user_1',
-      nome: derivedName.charAt(0).toUpperCase() + derivedName.slice(1),
-      email: normalizedEmail || 'usuario@proestoque.app',
-    };
-    const authToken = `token-${Date.now()}`;
+      const loggedUser = response.data.user ?? response.data.usuario;
+      const authToken = response.data.token;
 
-    await AsyncStorage.setItem(
-      AUTH_STORAGE_KEY,
-      JSON.stringify({
-        user: loggedUser,
-        token: authToken,
-      })
-    );
+      if (!loggedUser || !authToken) {
+        throw new Error('Resposta inválida do servidor ao fazer login.');
+      }
 
-    cachedAuthSession = {
-      user: loggedUser,
-      token: authToken,
-    };
-    setUser(loggedUser);
-    setToken(authToken);
-    setIsLoading(false);
+      await salvarSessao(loggedUser, authToken);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const registrar = async (nome: string, email: string, password: string) => {
+    setIsLoading(true);
+
+    try {
+      const normalizedEmail = email.trim().toLowerCase();
+
+      const response = await api.post<AuthResponse>('/auth/registro', {
+        nome: nome.trim(),
+        email: normalizedEmail,
+        senha: password,
+      });
+
+      const loggedUser = response.data.user ?? response.data.usuario;
+      const authToken = response.data.token;
+
+      if (loggedUser && authToken) {
+        await salvarSessao(loggedUser, authToken);
+        return;
+      }
+
+      await login(normalizedEmail, password);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const logout = async () => {
     setIsLoading(true);
+
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
+
     cachedAuthSession = {
       user: null,
       token: null,
     };
+
     setUser(null);
     setToken(null);
     setIsLoading(false);
@@ -120,6 +180,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isBootstrapping,
       isAuthenticated: !!token,
       login,
+      registrar,
       logout,
     }),
     [user, token, isLoading, isBootstrapping]
