@@ -12,9 +12,11 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { theme } from '@/constants/theme';
-import ImagePickerField from '@/scr/components/ImagePicker';
-import { CATEGORIAS_MOCK } from '@/scr/data/mockData';
-import type { ProdutoFormData } from '@/scr/schemas/produtoSchema';
+import ImagePickerField from '@/src/components/ImagePicker';
+import { ErrorView } from '@/src/components/ErrorView';
+import { LoadingView } from '@/src/components/LoadingView';
+import { useCategorias } from '@/src/hooks/useCategorias';
+import type { ProdutoFormData } from '@/src/schemas/produtoSchema';
 
 type ProdutoFormProps = {
   control: Control<ProdutoFormData>;
@@ -111,6 +113,16 @@ export default function ProdutoForm({
   submitLabel,
   onDelete,
 }: ProdutoFormProps) {
+  const { categorias, isLoading: isLoadingCategorias, error, carregarCategorias } = useCategorias();
+
+  if (isLoadingCategorias) {
+    return <LoadingView mensagem="Carregando categorias..." />;
+  }
+
+  if (error) {
+    return <ErrorView mensagem={error} onRetry={carregarCategorias} />;
+  }
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['bottom']}>
       <ScrollView
@@ -150,7 +162,7 @@ export default function ProdutoForm({
           render={({ field: { onChange, value } }) => (
             <FormField error={errors.categoriaId?.message} label="Categoria">
               <View style={styles.chipGroup}>
-                {CATEGORIAS_MOCK.map((categoria) => {
+                {categorias.map((categoria) => {
                   const isSelected = value === categoria.id;
 
                   return (

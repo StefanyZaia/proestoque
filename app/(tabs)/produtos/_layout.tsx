@@ -16,9 +16,10 @@ export default function ProdutosStackLayout() {
           fontWeight: '700',
         },
       }}>
-      <Stack.Screen name="index" options={{ title: 'Produtos' }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="novo" options={{ title: 'Novo produto' }} />
       <Stack.Screen name="[id]" options={{ title: 'Editar produto' }} />
+      <Stack.Screen name="movimentacoes/[id]" options={{ title: 'Movimentacoes' }} />
     </Stack>
   );
 }

@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useAuth } from '@/scr/contexts/AuthContext';
-import LogoProEstoque from '../../scr/components/LogoProEstoque';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { getApiErrorMessage } from '@/src/services/api';
+import LogoProEstoque from '../../src/components/LogoProEstoque';
 
 const colors = {
   primary: '#F4A7D8',
@@ -74,7 +75,16 @@ export default function LoginScreen() {
                 style={[styles.button, isLoading && styles.buttonDisabled]}
                 disabled={isLoading}
                 onPress={async () => {
-                  await login(email, password);
+                  if (!email.trim() || !password) {
+                    Alert.alert('Campos obrigatorios', 'Informe o e-mail e a senha.');
+                    return;
+                  }
+
+                  try {
+                    await login(email, password);
+                  } catch (error) {
+                    Alert.alert('Erro no login', getApiErrorMessage(error, 'Nao foi possivel entrar.'));
+                  }
                 }}>
                 <Text style={styles.buttonText}>{isLoading ? 'Entrando...' : 'Entrar'}</Text>
               </TouchableOpacity>

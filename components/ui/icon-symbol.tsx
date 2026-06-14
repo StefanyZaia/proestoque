@@ -1,1 +1,1 @@
-export { IconSymbol } from '../../scr/components/ui/icon-symbol';
+export { IconSymbol } from '../../src/components/ui/icon-symbol';

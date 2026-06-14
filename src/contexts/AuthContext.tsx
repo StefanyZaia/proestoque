@@ -2,13 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   createContext,
   PropsWithChildren,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
   useState,
 } from 'react';
 
-import { api, AUTH_STORAGE_KEY, setAuthSessionChangeHandler } from '@/services/api';
+import { api, AUTH_STORAGE_KEY, setAuthSessionChangeHandler } from '@/src/services/api';
 
 let hasBootstrappedAuth = false;
 
@@ -60,7 +61,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isLoading, setIsLoading] = useState(!hasBootstrappedAuth);
   const [isBootstrapping, setIsBootstrapping] = useState(!hasBootstrappedAuth);
 
-  function aplicarSessao(session: StoredAuthSession) {
+  const aplicarSessao = useCallback((session: StoredAuthSession) => {
     const nextUser = session.user ?? null;
     const nextToken = session.token ?? null;
     const nextRefreshToken = session.refreshToken ?? null;
@@ -73,17 +74,17 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     setUser(nextUser);
     setToken(nextToken);
-  }
+  }, []);
 
-  function limparSessaoLocal() {
+  const limparSessaoLocal = useCallback(() => {
     aplicarSessao({
       user: null,
       token: null,
       refreshToken: null,
     });
-  }
+  }, [aplicarSessao]);
 
-  async function salvarSessao(loggedUser: User, authToken: string, refreshToken: string) {
+  const salvarSessao = useCallback(async (loggedUser: User, authToken: string, refreshToken: string) => {
     const session = {
       user: loggedUser,
       token: authToken,
@@ -92,7 +93,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     await AsyncStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(session));
     aplicarSessao(session);
-  }
+  }, [aplicarSessao]);
 
   useEffect(() => {
     setAuthSessionChangeHandler((session) => {
@@ -107,7 +108,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
     return () => {
       setAuthSessionChangeHandler(null);
     };
-  }, []);
+  }, [aplicarSessao, limparSessaoLocal]);
 
   useEffect(() => {
     if (hasBootstrappedAuth) {
@@ -139,9 +140,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     };
 
     restoreSession();
-  }, []);
+  }, [aplicarSessao]);
 
-  const login = async (email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);
 
     try {
@@ -164,9 +165,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [salvarSessao]);
 
-  const registrar = async (nome: string, email: string, password: string) => {
+  const registrar = useCallback(async (nome: string, email: string, password: string) => {
     setIsLoading(true);
 
     try {
@@ -191,15 +192,15 @@ export function AuthProvider({ children }: PropsWithChildren) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [login, salvarSessao]);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     setIsLoading(true);
 
     await AsyncStorage.removeItem(AUTH_STORAGE_KEY);
     limparSessaoLocal();
     setIsLoading(false);
-  };
+  }, [limparSessaoLocal]);
 
   const value = useMemo<AuthContextType>(
     () => ({
@@ -212,7 +213,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       registrar,
       logout,
     }),
-    [user, token, isLoading, isBootstrapping]
+    [user, token, isLoading, isBootstrapping, login, registrar, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import {
   FlatList,
   Image,
+  RefreshControl,
   ScrollView,
   SectionList,
   StyleSheet,
@@ -16,13 +17,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useProducts } from '@/scr/contexts/ProductsContext';
-import {
-  CATEGORIAS_MOCK,
-  formatarPreco,
-  type Categoria,
-  type Produto,
-} from '@/scr/data/mockData';
+import { useProducts } from '@/src/contexts/ProductsContext';
+import { ErrorView } from '@/src/components/ErrorView';
+import { LoadingView } from '@/src/components/LoadingView';
+import { useCategorias } from '@/src/hooks/useCategorias';
+import type { Categoria, Produto } from '@/src/types/estoque';
+import { formatCurrency } from '@/src/utils/formatters';
 
 type ViewMode = 'lista' | 'grade' | 'categorias';
 
@@ -32,6 +32,19 @@ type ProductSection = {
   data: Produto[];
 };
 
+function mixWithWhite(hexColor: string, amount = 0.72) {
+  const normalized = hexColor.replace('#', '');
+
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    return '#F2DDEC';
+  }
+
+  const channels = [0, 2, 4].map((offset) => parseInt(normalized.slice(offset, offset + 2), 16));
+  const mixed = channels.map((channel) => Math.round(channel + (255 - channel) * amount));
+
+  return `#${mixed.map((channel) => channel.toString(16).padStart(2, '0')).join('')}`;
+}
+
 export default function ProdutosScreen() {
   const [searchText, setSearchText] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -39,7 +52,8 @@ export default function ProdutosScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
-  const { produtos } = useProducts();
+  const { produtos, isLoading, error, carregarProdutos } = useProducts();
+  const { categorias } = useCategorias();
   const palette = Colors[colorScheme ?? 'light'];
 
   const produtosFiltrados = useMemo(() => {
@@ -51,15 +65,15 @@ export default function ProdutosScreen() {
   }, [produtos, searchText, selectedCategory]);
 
   const secoesAgrupadas = useMemo<ProductSection[]>(() => {
-    return CATEGORIAS_MOCK.map((categoria) => ({
+    return categorias.map((categoria) => ({
       title: categoria.nome,
       categoria,
       data: produtosFiltrados.filter((produto) => produto.categoriaId === categoria.id),
     })).filter((section) => section.data.length > 0);
-  }, [produtosFiltrados]);
+  }, [categorias, produtosFiltrados]);
 
   const getCategoria = (categoriaId: string) =>
-    CATEGORIAS_MOCK.find((categoria) => categoria.id === categoriaId)?.nome ?? categoriaId;
+    categorias.find((categoria) => categoria.id === categoriaId)?.nome ?? categoriaId;
 
   const getStatusProduto = (produto: Produto) => {
     if (produto.quantidade === 0) {
@@ -90,8 +104,8 @@ export default function ProdutosScreen() {
           compact && styles.produtoCardCompact,
         ]}>
         <View style={styles.produtoHeader}>
-          {item.fotoUri ? (
-            <Image source={{ uri: item.fotoUri }} style={styles.produtoThumb} />
+          {item.foto ?? item.fotoUri ? (
+            <Image source={{ uri: item.foto ?? item.fotoUri }} style={styles.produtoThumb} />
           ) : (
             <View style={[styles.produtoThumbPlaceholder, { borderColor: palette.border }]}>
               <ThemedText style={styles.produtoThumbPlaceholderText}>IMG</ThemedText>
@@ -106,7 +120,7 @@ export default function ProdutosScreen() {
         <ThemedText style={styles.produtoMeta}>
           {item.quantidade} {item.unidade} em estoque
         </ThemedText>
-        <ThemedText style={styles.produtoMeta}>{formatarPreco(item.preco)}</ThemedText>
+        <ThemedText style={styles.produtoMeta}>{formatCurrency(item.preco)}</ThemedText>
         {!compact ? (
           <>
             <ThemedText style={styles.produtoCategoria}>
@@ -218,20 +232,30 @@ export default function ProdutosScreen() {
             </ThemedText>
           </TouchableOpacity>
 
-          {CATEGORIAS_MOCK.map((categoria) => (
+          {categorias.map((categoria) => (
             <TouchableOpacity
               key={categoria.id}
               style={[
                 styles.chip,
                 {
-                  backgroundColor: selectedCategory === categoria.id ? palette.tint : categoria.cor,
-                  borderColor: palette.border,
+                  backgroundColor:
+                    colorScheme === 'dark'
+                      ? selectedCategory === categoria.id
+                        ? palette.tint
+                        : categoria.cor
+                      : mixWithWhite(categoria.cor, selectedCategory === categoria.id ? 0.55 : 0.76),
+                  borderColor:
+                    colorScheme === 'dark' ? palette.border : mixWithWhite(categoria.cor, 0.58),
                 },
               ]}
               onPress={() =>
                 setSelectedCategory((current) => (current === categoria.id ? null : categoria.id))
               }>
-              <ThemedText style={[styles.chipText, selectedCategory === categoria.id && styles.chipTextSelected]}>
+              <ThemedText
+                style={[
+                  styles.chipText,
+                  selectedCategory === categoria.id && colorScheme === 'dark' && styles.chipTextSelected,
+                ]}>
                 {categoria.nome}
               </ThemedText>
             </TouchableOpacity>
@@ -239,7 +263,11 @@ export default function ProdutosScreen() {
         </ScrollView>
       </ThemedView>
 
-      {viewMode === 'categorias' ? (
+      {isLoading && produtos.length === 0 ? (
+        <LoadingView mensagem="Carregando produtos..." />
+      ) : error && produtos.length === 0 ? (
+        <ErrorView mensagem={error} onRetry={carregarProdutos} />
+      ) : viewMode === 'categorias' ? (
         <SectionList
           sections={secoesAgrupadas}
           keyExtractor={(item) => item.id}
@@ -261,6 +289,7 @@ export default function ProdutosScreen() {
           contentContainerStyle={styles.listContainer}
           ListEmptyComponent={renderEmptyState}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={carregarProdutos} />}
         />
       ) : (
         <FlatList
@@ -273,6 +302,7 @@ export default function ProdutosScreen() {
           ListEmptyComponent={renderEmptyState}
           contentContainerStyle={styles.listContainer}
           showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={isLoading} onRefresh={carregarProdutos} />}
         />
       )}
 

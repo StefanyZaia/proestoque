@@ -41,7 +41,7 @@ export default function Input({
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        {leftIcon && <Ionicons name={leftIcon as any} size={18} color={colors.textLight} style={styles.icon} />}
+        {leftIcon ? <Ionicons name={leftIcon as any} size={18} color={colors.textLight} style={styles.icon} /> : null}
         <TextInput
           style={[styles.input, leftIcon && { paddingLeft: 0 }, error && styles.inputError, style]}
           placeholder={placeholder}
@@ -54,7 +54,7 @@ export default function Input({
           autoCorrect={autoCorrect}
         />
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
     </View>
   );
 }

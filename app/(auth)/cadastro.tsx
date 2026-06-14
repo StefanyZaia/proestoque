@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Input from '../../scr/components/Input';
-import LogoProEstoque from '../../scr/components/LogoProEstoque';
+import Input from '../../src/components/Input';
+import LogoProEstoque from '../../src/components/LogoProEstoque';
+import { useAuth } from '../../src/contexts/AuthContext';
+import { getApiErrorMessage } from '../../src/services/api';
 
 const colors = {
   primary: '#F4A7D8',
@@ -20,18 +22,40 @@ export default function CadastroScreen() {
   const [loading, setLoading] = useState(false);
   const [errorConfirmar, setErrorConfirmar] = useState('');
   const router = useRouter();
+  const { registrar } = useAuth();
 
-  const handleCriarConta = () => {
+  const handleCriarConta = async () => {
+    if (nome.trim().length < 2) {
+      Alert.alert('Nome invalido', 'Informe um nome com pelo menos 2 caracteres.');
+      return;
+    }
+
+    if (!email.trim().includes('@')) {
+      Alert.alert('E-mail invalido', 'Informe um e-mail valido.');
+      return;
+    }
+
+    if (senha.length < 6) {
+      Alert.alert('Senha invalida', 'A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+
     if (senha !== confirmarSenha) {
       setErrorConfirmar('As senhas não coincidem');
       return;
     }
 
     setErrorConfirmar('');
-    setLoading(true);
-    setTimeout(() => {
+    try {
+      setLoading(true);
+      await registrar(nome, email, senha);
+      router.replace('/(tabs)');
+    } catch (error) {
+      const message = getApiErrorMessage(error, 'Nao foi possivel criar a conta.');
+      Alert.alert('Erro no cadastro', message);
+    } finally {
       setLoading(false);
-    }, 2000);
+    }
   };
 
   return (

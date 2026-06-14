@@ -7,9 +7,9 @@ import 'react-native-reanimated';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppThemeProvider } from '@/providers/app-theme-provider';
-import SplashScreen from '@/scr/components/SplashScreen';
-import { AuthProvider, useAuth } from '@/scr/contexts/AuthContext';
-import { ProductsProvider } from '@/scr/contexts/ProductsContext';
+import SplashScreen from '@/src/components/SplashScreen';
+import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
+import { ProductsProvider } from '@/src/contexts/ProductsContext';
 
 const navigationTheme = {
   light: {

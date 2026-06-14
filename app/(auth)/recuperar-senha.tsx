@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import Input from '../../scr/components/Input';
-import LogoProEstoque from '../../scr/components/LogoProEstoque';
+import Input from '../../src/components/Input';
+import LogoProEstoque from '../../src/components/LogoProEstoque';
 
 const colors = {
   primary: '#F4A7D8',

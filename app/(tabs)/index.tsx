@@ -7,13 +7,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useAuth } from '@/scr/contexts/AuthContext';
-import { useProducts } from '@/scr/contexts/ProductsContext';
-import {
-  CATEGORIAS_MOCK,
-  formatarPreco,
-  type Produto,
-} from '@/scr/data/mockData';
+import { useAuth } from '@/src/contexts/AuthContext';
+import { useProducts } from '@/src/contexts/ProductsContext';
+import { ErrorView } from '@/src/components/ErrorView';
+import { LoadingView } from '@/src/components/LoadingView';
+import { useCategorias } from '@/src/hooks/useCategorias';
+import type { Produto } from '@/src/types/estoque';
+import { formatCurrency } from '@/src/utils/formatters';
 
 export default function HomeScreen() {
   const [refreshing, setRefreshing] = useState(false);
@@ -21,7 +21,8 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colorScheme = useColorScheme();
   const { user } = useAuth();
-  const { produtos } = useProducts();
+  const { produtos, isLoading, error, carregarProdutos } = useProducts();
+  const { categorias } = useCategorias();
   const palette = Colors[colorScheme ?? 'light'];
 
   const nomeUsuario = user?.nome ?? 'Usuario';
@@ -47,9 +48,11 @@ export default function HomeScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    setTimeout(() => {
+    try {
+      await carregarProdutos();
+    } finally {
       setRefreshing(false);
-    }, 1500);
+    }
   };
 
   const resumoCards = [
@@ -68,16 +71,24 @@ export default function HomeScreen() {
     {
       id: 'categorias',
       titulo: 'Categorias',
-      valor: CATEGORIAS_MOCK.length.toString(),
+      valor: categorias.length.toString(),
       cor: colorScheme === 'dark' ? '#3C425F' : '#E8E1D8',
     },
     {
       id: 'valor',
       titulo: 'Valor Total',
-      valor: formatarPreco(valorTotalEstoque),
+      valor: formatCurrency(valorTotalEstoque),
       cor: colorScheme === 'dark' ? '#355148' : '#E6EFE4',
     },
   ];
+
+  if (isLoading && produtos.length === 0) {
+    return <LoadingView mensagem="Carregando dashboard..." />;
+  }
+
+  if (error && produtos.length === 0) {
+    return <ErrorView mensagem={error} onRetry={carregarProdutos} />;
+  }
 
   return (
     <FlatList
@@ -91,7 +102,7 @@ export default function HomeScreen() {
           <View style={styles.produtoInfo}>
             <ThemedText style={styles.produtoNome}>{item.nome}</ThemedText>
             <ThemedText style={styles.produtoQuantidade}>
-              {item.quantidade} {item.unidade} • {formatarPreco(item.preco)}
+              {item.quantidade} {item.unidade} - {formatCurrency(item.preco)}
             </ThemedText>
           </View>
         </ThemedView>

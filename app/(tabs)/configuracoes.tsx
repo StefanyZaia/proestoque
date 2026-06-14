@@ -7,7 +7,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAppTheme } from '@/providers/app-theme-provider';
-import { useAuth } from '@/scr/contexts/AuthContext';
+import { useAuth } from '@/src/contexts/AuthContext';
 
 export default function ConfiguracoesScreen() {
   const colorScheme = useColorScheme();

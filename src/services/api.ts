@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig, isAxiosError } from 'axios';
 import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
@@ -23,6 +23,28 @@ type RefreshResponse = {
 type RetryableRequestConfig = InternalAxiosRequestConfig & {
   _retry?: boolean;
 };
+
+type ApiErrorBody = {
+  erro?: string;
+  message?: string;
+  detalhes?: { campo?: string; mensagem?: string }[];
+};
+
+export function getApiErrorMessage(error: unknown, fallback: string) {
+  if (!isAxiosError<ApiErrorBody>(error)) {
+    return error instanceof Error ? error.message : fallback;
+  }
+
+  const body = error.response?.data;
+  const detailMessage = body?.detalhes?.map((detail) => detail.mensagem).filter(Boolean).join('\n');
+
+  if (detailMessage) return detailMessage;
+  if (body?.erro) return body.erro;
+  if (body?.message) return body.message;
+  if (!error.response) return 'Sem conexao com a API.';
+
+  return fallback;
+}
 
 let refreshPromise: Promise<string | null> | null = null;
 let onSessionChange: ((session: StoredAuthSession | null) => void) | null = null;
@@ -49,6 +71,7 @@ function getDevelopmentApiUrl() {
 }
 
 const BASE_URL =
+  Constants.expoConfig?.extra?.apiUrl ??
   process.env.EXPO_PUBLIC_API_URL ??
   (__DEV__
     ? getDevelopmentApiUrl()
@@ -93,12 +116,13 @@ async function refreshAccessToken() {
     onSessionChange?.(nextSession);
 
     return nextSession.token ?? null;
-  } catch (error) {
+  } catch {
     await clearStoredSession();
     return null;
   }
 }
 
+// eslint-disable-next-line import/no-named-as-default-member
 export const api = axios.create({
   baseURL: BASE_URL,
   timeout: 10000,
@@ -121,9 +145,9 @@ api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as RetryableRequestConfig | undefined;
-    const isRefreshRequest = originalRequest?.url?.includes('/auth/refresh');
+    const isAuthRequest = originalRequest?.url?.includes('/auth/');
 
-    if (error.response?.status !== 401 || !originalRequest || originalRequest._retry || isRefreshRequest) {
+    if (error.response?.status !== 401 || !originalRequest || originalRequest._retry || isAuthRequest) {
       return Promise.reject(error);
     }
 
