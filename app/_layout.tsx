@@ -1,4 +1,5 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
@@ -10,6 +11,16 @@ import { AppThemeProvider } from '@/providers/app-theme-provider';
 import SplashScreen from '@/src/components/SplashScreen';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { ProductsProvider } from '@/src/contexts/ProductsContext';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
 
 const navigationTheme = {
   light: {

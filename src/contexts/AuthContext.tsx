@@ -10,6 +10,7 @@ import {
 } from 'react';
 
 import { api, AUTH_STORAGE_KEY, setAuthSessionChangeHandler } from '@/src/services/api';
+import { agendarVerificacaoDiaria, solicitarPermissao } from '@/src/services/notifications';
 
 let hasBootstrappedAuth = false;
 
@@ -141,6 +142,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
     restoreSession();
   }, [aplicarSessao]);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const prepararNotificacoes = async () => {
+      const autorizado = await solicitarPermissao();
+
+      if (autorizado) {
+        await agendarVerificacaoDiaria();
+      }
+    };
+
+    void prepararNotificacoes();
+  }, [token]);
 
   const login = useCallback(async (email: string, password: string) => {
     setIsLoading(true);

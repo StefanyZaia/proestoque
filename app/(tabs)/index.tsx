@@ -10,7 +10,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '@/src/contexts/AuthContext';
 import { useProducts } from '@/src/contexts/ProductsContext';
 import { ErrorView } from '@/src/components/ErrorView';
-import { LoadingView } from '@/src/components/LoadingView';
+import { ProdutoListaSkeleton } from '@/src/components/ProdutoSkeleton';
 import { useCategorias } from '@/src/hooks/useCategorias';
 import type { Produto } from '@/src/types/estoque';
 import { formatCurrency } from '@/src/utils/formatters';
@@ -83,7 +83,11 @@ export default function HomeScreen() {
   ];
 
   if (isLoading && produtos.length === 0) {
-    return <LoadingView mensagem="Carregando dashboard..." />;
+    return (
+      <ThemedView style={[styles.container, { paddingTop: insets.top + 24 }]}>
+        <ProdutoListaSkeleton count={6} />
+      </ThemedView>
+    );
   }
 
   if (error && produtos.length === 0) {

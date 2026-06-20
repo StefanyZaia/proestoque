@@ -1,64 +1,49 @@
-import * as Notifications from "expo-notifications";
-import * as Device from "expo-device";
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
 
-// Configura como as notificações aparecem quando o app está aberto
-// "banner" = aparece como banner no topo + som
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
-
-// ── Solicitar permissão ─────────────────────────────────────
-export async function solicitarPermissaoNotificacoes(): Promise<boolean> {
-  // Notificações só funcionam em dispositivos físicos (não simulador)
+export async function solicitarPermissao(): Promise<boolean> {
   if (!Device.isDevice) {
-    console.warn("Notificações não funcionam no simulador");
+    console.warn('Notificacoes nao funcionam no simulador');
     return false;
   }
 
   const { status: statusAtual } = await Notifications.getPermissionsAsync();
 
-  if (statusAtual === "granted") return true;
+  if (statusAtual === 'granted') return true;
 
   const { status } = await Notifications.requestPermissionsAsync();
-  return status === "granted";
+  return status === 'granted';
 }
 
-// ── Notificação imediata ────────────────────────────────────
-export async function notificarEstoqueCritico(produtos: { nome: string; quantidade: number; quantidadeMinima: number }[]) {
-  const temPermissao = await solicitarPermissaoNotificacoes();
-  if (!temPermissao) return;
+export const solicitarPermissaoNotificacoes = solicitarPermissao;
 
+export async function notificarEstoqueCritico(
+  produtos: { nome: string; quantidade: number; quantidadeMinima: number }[]
+) {
   if (produtos.length === 0) return;
 
-  // Uma notificação por produto crítico (máx 3 para não spam)
+  const temPermissao = await solicitarPermissao();
+  if (!temPermissao) return;
+
   const paraNotificar = produtos.slice(0, 3);
 
   for (const produto of paraNotificar) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "⚠️ Estoque crítico",
-        body: `${produto.nome}: ${produto.quantidade}/${produto.quantidadeMinima} (abaixo do mínimo)`,
-        data: { produtoNome: produto.nome }, // Dados extras acessíveis ao tocar
-        // Badge: número de alertas no ícone do app
+        title: 'Estoque critico',
+        body: `${produto.nome}: ${produto.quantidade}/${produto.quantidadeMinima} abaixo do minimo`,
+        data: { produtoNome: produto.nome },
         badge: produtos.length,
       },
-      // trigger: null = dispara IMEDIATAMENTE
       trigger: null,
     });
   }
 
-  // Se houver mais de 3, envia uma notificação de resumo
   if (produtos.length > 3) {
     await Notifications.scheduleNotificationAsync({
       content: {
-        title: "⚠️ Mais alertas de estoque",
-        body: `+${produtos.length - 3} produtos com estoque crítico. Verifique o ProEstoque.`,
+        title: 'Mais alertas de estoque',
+        body: `+${produtos.length - 3} produtos com estoque critico. Verifique o ProEstoque.`,
         badge: produtos.length,
       },
       trigger: null,
@@ -66,25 +51,25 @@ export async function notificarEstoqueCritico(produtos: { nome: string; quantida
   }
 }
 
-// ── Notificação agendada (checagem diária) ──────────────────
 export async function agendarVerificacaoDiaria() {
-  // Cancela agendamentos anteriores para evitar duplicatas
+  const temPermissao = await solicitarPermissao();
+  if (!temPermissao) return;
+
   await Notifications.cancelAllScheduledNotificationsAsync();
 
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: "📦 ProEstoque",
-      body: "Verifique o estoque de hoje. Toque para abrir.",
+      title: 'ProEstoque',
+      body: 'Verifique o estoque de hoje. Toque para abrir.',
     },
     trigger: {
-      hour: 8,      // 8h da manhã
+      hour: 8,
       minute: 0,
-      repeats: true, // Todos os dias
-    } as any,
+      repeats: true,
+    } as Notifications.NotificationTriggerInput,
   });
 }
 
-// ── Limpar badge ao abrir o app ─────────────────────────────
 export async function limparBadge() {
   await Notifications.setBadgeCountAsync(0);
 }

@@ -19,7 +19,7 @@ import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useProducts } from '@/src/contexts/ProductsContext';
 import { ErrorView } from '@/src/components/ErrorView';
-import { LoadingView } from '@/src/components/LoadingView';
+import { ProdutoListaSkeleton } from '@/src/components/ProdutoSkeleton';
 import { useCategorias } from '@/src/hooks/useCategorias';
 import type { Categoria, Produto } from '@/src/types/estoque';
 import { formatCurrency } from '@/src/utils/formatters';
@@ -264,7 +264,9 @@ export default function ProdutosScreen() {
       </ThemedView>
 
       {isLoading && produtos.length === 0 ? (
-        <LoadingView mensagem="Carregando produtos..." />
+        <View style={styles.listContainer}>
+          <ProdutoListaSkeleton count={8} />
+        </View>
       ) : error && produtos.length === 0 ? (
         <ErrorView mensagem={error} onRetry={carregarProdutos} />
       ) : viewMode === 'categorias' ? (

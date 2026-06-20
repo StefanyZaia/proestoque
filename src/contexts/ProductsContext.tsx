@@ -3,6 +3,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 
 import type { ProdutoFormData } from '@/src/schemas/produtoSchema';
 import { api } from '@/src/services/api';
+import { notificarEstoqueCritico } from '@/src/services/notifications';
 import type { Movimentacao, Produto } from '@/src/types/estoque';
 import { useAuth } from '@/src/contexts/AuthContext';
 
@@ -54,6 +55,11 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data } = await api.get<Produto[]>('/produtos');
       setProdutos(data);
+
+      const produtosCriticos = data.filter(
+        (produto) => produto.quantidade < produto.quantidadeMinima
+      );
+      await notificarEstoqueCritico(produtosCriticos);
     } catch (requestError) {
       setError(getErrorMessage(requestError));
     } finally {
