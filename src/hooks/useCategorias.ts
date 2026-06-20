@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 
-import { api } from '@/src/services/api';
+import { api, getApiErrorMessage } from '@/src/services/api';
 import type { Categoria } from '@/src/types/estoque';
 
 export function useCategorias() {
@@ -15,8 +15,8 @@ export function useCategorias() {
     try {
       const { data } = await api.get<Categoria[]>('/categorias');
       setCategorias(data);
-    } catch {
-      setError('Nao foi possivel carregar as categorias.');
+    } catch (requestError) {
+      setError(getApiErrorMessage(requestError, 'Nao foi possivel carregar as categorias.'));
     } finally {
       setIsLoading(false);
     }

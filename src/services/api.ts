@@ -41,7 +41,7 @@ export function getApiErrorMessage(error: unknown, fallback: string) {
   if (detailMessage) return detailMessage;
   if (body?.erro) return body.erro;
   if (body?.message) return body.message;
-  if (!error.response) return 'Sem conexao com a API.';
+  if (!error.response) return `Sem conexao com a API (${BASE_URL}).`;
 
   return fallback;
 }

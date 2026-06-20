@@ -1,26 +1,18 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import * as Notifications from 'expo-notifications';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AppThemeProvider } from '@/providers/app-theme-provider';
+import { AppRuntimeErrorBoundary } from '@/src/components/AppRuntimeErrorBoundary';
 import SplashScreen from '@/src/components/SplashScreen';
 import { AuthProvider, useAuth } from '@/src/contexts/AuthContext';
 import { ProductsProvider } from '@/src/contexts/ProductsContext';
-
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-  }),
-});
+import { configurarNotificationHandler } from '@/src/services/notifications';
 
 const navigationTheme = {
   light: {
@@ -76,14 +68,20 @@ function RootNavigation() {
 }
 
 export default function RootLayout() {
+  useEffect(() => {
+    void configurarNotificationHandler();
+  }, []);
+
   return (
-    <AuthProvider>
-      <ProductsProvider>
-        <AppThemeProvider>
-          <RootNavigation />
-        </AppThemeProvider>
-      </ProductsProvider>
-    </AuthProvider>
+    <AppRuntimeErrorBoundary>
+      <AuthProvider>
+        <ProductsProvider>
+          <AppThemeProvider>
+            <RootNavigation />
+          </AppThemeProvider>
+        </ProductsProvider>
+      </AuthProvider>
+    </AppRuntimeErrorBoundary>
   );
 }
 

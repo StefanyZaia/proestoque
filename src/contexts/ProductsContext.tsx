@@ -1,8 +1,8 @@
-import { AxiosError } from 'axios';
+import { isAxiosError } from 'axios';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import type { ProdutoFormData } from '@/src/schemas/produtoSchema';
-import { api } from '@/src/services/api';
+import { api, getApiErrorMessage } from '@/src/services/api';
 import { notificarEstoqueCritico } from '@/src/services/notifications';
 import type { Movimentacao, Produto } from '@/src/types/estoque';
 import { useAuth } from '@/src/contexts/AuthContext';
@@ -27,12 +27,7 @@ type ProductsContextType = {
 };
 
 function getErrorMessage(error: unknown) {
-  if (error instanceof AxiosError) {
-    const message = (error.response?.data as { message?: string } | undefined)?.message;
-    return message ?? (error.response ? 'Nao foi possivel concluir a operacao.' : 'Sem conexao com a API.');
-  }
-
-  return 'Ocorreu um erro inesperado.';
+  return getApiErrorMessage(error, 'Nao foi possivel concluir a operacao.');
 }
 
 function toApiPayload(data: ProdutoFormData) {
@@ -43,7 +38,7 @@ function toApiPayload(data: ProdutoFormData) {
 const ProductsContext = createContext<ProductsContextType | null>(null);
 
 export function ProductsProvider({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isBootstrapping } = useAuth();
+  const { isAuthenticated, isBootstrapping, logout } = useAuth();
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,11 +56,16 @@ export function ProductsProvider({ children }: { children: React.ReactNode }) {
       );
       await notificarEstoqueCritico(produtosCriticos);
     } catch (requestError) {
+      if (isAxiosError(requestError) && requestError.response?.status === 401) {
+        await logout();
+        return;
+      }
+
       setError(getErrorMessage(requestError));
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [logout]);
 
   useEffect(() => {
     if (isBootstrapping) return;

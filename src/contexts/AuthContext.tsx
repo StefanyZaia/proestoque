@@ -24,6 +24,8 @@ let cachedAuthSession: {
   refreshToken: null,
 };
 
+const BOOTSTRAP_TIMEOUT_MS = 8000;
+
 export type User = {
   id: string;
   nome: string;
@@ -116,12 +118,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
       return;
     }
 
+    const getStoredSession = () =>
+      Promise.race([
+        AsyncStorage.getItem(AUTH_STORAGE_KEY),
+        new Promise<null>((resolve) => {
+          setTimeout(() => resolve(null), BOOTSTRAP_TIMEOUT_MS);
+        }),
+      ]);
+
     const restoreSession = async () => {
       const minimumSplashDelay = new Promise((resolve) => setTimeout(resolve, 2600));
 
       try {
         const [storedSession] = await Promise.all([
-          AsyncStorage.getItem(AUTH_STORAGE_KEY),
+          getStoredSession(),
           minimumSplashDelay,
         ]);
 
