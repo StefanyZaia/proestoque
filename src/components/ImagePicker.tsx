@@ -3,7 +3,8 @@ import * as ExpoImagePicker from 'expo-image-picker';
 import { useState } from 'react';
 import { Alert, Image, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { COLORS, theme } from '../../constants/theme';
+import { Colors } from '../../constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 type ImagePickerProps = {
   value: string | null;
@@ -12,6 +13,8 @@ type ImagePickerProps = {
 
 export default function ImagePickerField({ value, onChange }: ImagePickerProps) {
   const [loading, setLoading] = useState(false);
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme ?? 'light'];
 
   const solicitarPermissao = async () => {
     const { status } = await ExpoImagePicker.requestMediaLibraryPermissionsAsync();
@@ -81,13 +84,15 @@ export default function ImagePickerField({ value, onChange }: ImagePickerProps) 
   };
 
   return (
-    <TouchableOpacity onPress={handlePress} style={styles.container}>
+    <TouchableOpacity
+      onPress={handlePress}
+      style={[styles.container, { borderColor: palette.border }]}>
       {value ? (
         <Image source={{ uri: value }} style={styles.image} />
       ) : (
-        <View style={styles.placeholder}>
-          <Ionicons name="camera-outline" size={32} color={COLORS.textLight} />
-          <Text style={styles.placeholderText}>
+        <View style={[styles.placeholder, { backgroundColor: palette.card }]}>
+          <Ionicons name="camera-outline" size={32} color={palette.icon} />
+          <Text style={[styles.placeholderText, { color: palette.icon }]}>
             {loading ? 'Abrindo...' : 'Adicionar foto'}
           </Text>
         </View>
@@ -98,7 +103,6 @@ export default function ImagePickerField({ value, onChange }: ImagePickerProps) 
 
 const styles = StyleSheet.create({
   container: {
-    borderColor: theme.colors.border,
     borderRadius: 16,
     borderStyle: 'dashed',
     borderWidth: 1.5,
@@ -112,13 +116,11 @@ const styles = StyleSheet.create({
   },
   placeholder: {
     alignItems: 'center',
-    backgroundColor: COLORS.background,
     flex: 1,
     gap: 4,
     justifyContent: 'center',
   },
   placeholderText: {
-    color: COLORS.textLight,
     fontSize: 11,
   },
 });

@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { theme } from '@/constants/theme';
+import { Colors, theme } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import ImagePickerField from '@/src/components/ImagePicker';
 import { ErrorView } from '@/src/components/ErrorView';
 import { LoadingView } from '@/src/components/LoadingView';
@@ -45,10 +46,11 @@ type PriceFieldProps = {
   error?: string;
   onBlur: () => void;
   onChange: (value: number) => void;
+  palette: typeof Colors.light;
   value: number;
 };
 
-function PriceField({ error, onBlur, onChange, value }: PriceFieldProps) {
+function PriceField({ error, onBlur, onChange, palette, value }: PriceFieldProps) {
   const [inputValue, setInputValue] = useState(formatPriceInput(value));
   const [isFocused, setIsFocused] = useState(false);
 
@@ -59,7 +61,7 @@ function PriceField({ error, onBlur, onChange, value }: PriceFieldProps) {
   }, [isFocused, value]);
 
   return (
-    <FormField error={error} label="Preco">
+    <FormField error={error} label="Preco" palette={palette}>
       <TextInput
         keyboardType="decimal-pad"
         onBlur={() => {
@@ -97,8 +99,11 @@ function PriceField({ error, onBlur, onChange, value }: PriceFieldProps) {
         }}
         onFocus={() => setIsFocused(true)}
         placeholder="0,00"
-        placeholderTextColor={theme.colors.textLight}
-        style={styles.input}
+        placeholderTextColor={palette.icon}
+        style={[
+          styles.input,
+          { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+        ]}
         value={inputValue}
       />
     </FormField>
@@ -113,6 +118,8 @@ export default function ProdutoForm({
   submitLabel,
   onDelete,
 }: ProdutoFormProps) {
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme ?? 'light'];
   const { categorias, isLoading: isLoadingCategorias, error, carregarCategorias } = useCategorias();
 
   if (isLoadingCategorias) {
@@ -124,7 +131,7 @@ export default function ProdutoForm({
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: palette.background }]} edges={['bottom']}>
       <ScrollView
         contentContainerStyle={styles.container}
         keyboardShouldPersistTaps="handled"
@@ -133,7 +140,7 @@ export default function ProdutoForm({
           control={control}
           name="fotoUri"
           render={({ field: { onChange, value } }) => (
-            <FormField label="Foto do produto">
+            <FormField label="Foto do produto" palette={palette}>
               <ImagePickerField onChange={onChange} value={value ?? null} />
             </FormField>
           )}
@@ -143,13 +150,16 @@ export default function ProdutoForm({
           control={control}
           name="nome"
           render={({ field: { onBlur, onChange, value } }) => (
-            <FormField error={errors.nome?.message} label="Nome do produto">
+            <FormField error={errors.nome?.message} label="Nome do produto" palette={palette}>
               <TextInput
                 onBlur={onBlur}
                 onChangeText={onChange}
                 placeholder="Ex.: Cafe Especial 250g"
-                placeholderTextColor={theme.colors.textLight}
-                style={styles.input}
+                placeholderTextColor={palette.icon}
+                style={[
+                  styles.input,
+                  { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+                ]}
                 value={value}
               />
             </FormField>
@@ -160,7 +170,7 @@ export default function ProdutoForm({
           control={control}
           name="categoriaId"
           render={({ field: { onChange, value } }) => (
-            <FormField error={errors.categoriaId?.message} label="Categoria">
+            <FormField error={errors.categoriaId?.message} label="Categoria" palette={palette}>
               <View style={styles.chipGroup}>
                 {categorias.map((categoria) => {
                   const isSelected = value === categoria.id;
@@ -172,9 +182,17 @@ export default function ProdutoForm({
                       style={[
                         styles.chip,
                         isSelected && styles.chipSelected,
-                        !isSelected && { backgroundColor: categoria.cor },
+                        !isSelected && {
+                          backgroundColor: colorScheme === 'dark' ? '#3A2E4A' : categoria.cor,
+                          borderColor: colorScheme === 'dark' ? palette.border : categoria.cor,
+                        },
                       ]}>
-                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: colorScheme === 'dark' && !isSelected ? palette.text : theme.colors.text },
+                          isSelected && styles.chipTextSelected,
+                        ]}>
                         {categoria.nome}
                       </Text>
                     </Pressable>
@@ -189,14 +207,17 @@ export default function ProdutoForm({
           control={control}
           name="quantidade"
           render={({ field: { onBlur, onChange, value } }) => (
-            <FormField error={errors.quantidade?.message} label="Quantidade em estoque">
+            <FormField error={errors.quantidade?.message} label="Quantidade em estoque" palette={palette}>
               <TextInput
                 keyboardType="numeric"
                 onBlur={onBlur}
                 onChangeText={(text) => onChange(text === '' ? 0 : Number(text))}
                 placeholder="0"
-                placeholderTextColor={theme.colors.textLight}
-                style={styles.input}
+                placeholderTextColor={palette.icon}
+                style={[
+                  styles.input,
+                  { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+                ]}
                 value={formatNumberInput(value)}
               />
             </FormField>
@@ -210,14 +231,18 @@ export default function ProdutoForm({
             <FormField
               error={errors.quantidadeMinima?.message}
               hint="Abaixo deste valor o produto entra em estoque critico."
-              label="Quantidade minima">
+              label="Quantidade minima"
+              palette={palette}>
               <TextInput
                 keyboardType="numeric"
                 onBlur={onBlur}
                 onChangeText={(text) => onChange(text === '' ? 0 : Number(text))}
                 placeholder="0"
-                placeholderTextColor={theme.colors.textLight}
-                style={styles.input}
+                placeholderTextColor={palette.icon}
+                style={[
+                  styles.input,
+                  { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+                ]}
                 value={formatNumberInput(value)}
               />
             </FormField>
@@ -232,6 +257,7 @@ export default function ProdutoForm({
               error={errors.preco?.message}
               onBlur={onBlur}
               onChange={onChange}
+              palette={palette}
               value={value}
             />
           )}
@@ -241,7 +267,7 @@ export default function ProdutoForm({
           control={control}
           name="unidade"
           render={({ field: { onChange, value } }) => (
-            <FormField error={errors.unidade?.message} label="Unidade">
+            <FormField error={errors.unidade?.message} label="Unidade" palette={palette}>
               <View style={styles.chipGroup}>
                 {unidades.map((unidade) => {
                   const isSelected = value === unidade;
@@ -250,8 +276,17 @@ export default function ProdutoForm({
                     <Pressable
                       key={unidade}
                       onPress={() => onChange(unidade)}
-                      style={[styles.unitChip, isSelected && styles.chipSelected]}>
-                      <Text style={[styles.chipText, isSelected && styles.chipTextSelected]}>
+                      style={[
+                        styles.unitChip,
+                        { backgroundColor: palette.card, borderColor: palette.border },
+                        isSelected && styles.chipSelected,
+                      ]}>
+                      <Text
+                        style={[
+                          styles.chipText,
+                          { color: palette.text },
+                          isSelected && styles.chipTextSelected,
+                        ]}>
                         {unidade}
                       </Text>
                     </Pressable>
@@ -266,14 +301,18 @@ export default function ProdutoForm({
           control={control}
           name="observacao"
           render={({ field: { onBlur, onChange, value } }) => (
-            <FormField error={errors.observacao?.message} label="Observacao">
+            <FormField error={errors.observacao?.message} label="Observacao" palette={palette}>
               <TextInput
                 multiline
                 onBlur={onBlur}
                 onChangeText={onChange}
                 placeholder="Detalhes extras do produto"
-                placeholderTextColor={theme.colors.textLight}
-                style={[styles.input, styles.textArea]}
+                placeholderTextColor={palette.icon}
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+                ]}
                 textAlignVertical="top"
                 value={value ?? ''}
               />
@@ -305,14 +344,15 @@ type FormFieldProps = {
   error?: string;
   hint?: string;
   label: string;
+  palette: typeof Colors.light;
 };
 
-function FormField({ children, error, hint, label }: FormFieldProps) {
+function FormField({ children, error, hint, label, palette }: FormFieldProps) {
   return (
     <View style={styles.field}>
-      <Text style={styles.label}>{label}</Text>
+      <Text style={[styles.label, { color: palette.text }]}>{label}</Text>
       {children}
-      {hint ? <Text style={styles.hint}>{hint}</Text> : null}
+      {hint ? <Text style={[styles.hint, { color: palette.icon }]}>{hint}</Text> : null}
       {error ? <Text style={styles.error}>{error}</Text> : null}
     </View>
   );
@@ -320,7 +360,6 @@ function FormField({ children, error, hint, label }: FormFieldProps) {
 
 const styles = StyleSheet.create({
   safeArea: {
-    backgroundColor: theme.colors.background,
     flex: 1,
   },
   container: {

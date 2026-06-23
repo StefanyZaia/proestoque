@@ -4,6 +4,8 @@ import { useEffect } from 'react';
 import { Alert, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useForm } from 'react-hook-form';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import ProdutoForm from '@/src/components/produtos/ProdutoForm';
 import { useProducts } from '@/src/contexts/ProductsContext';
 import { produtoSchema, type ProdutoFormData } from '@/src/schemas/produtoSchema';
@@ -16,6 +18,8 @@ const defaultValues: ProdutoFormData = {
 export default function EditarProdutoScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme ?? 'light'];
   const { editarProduto, deletarProduto, getProdutoById } = useProducts();
   const { control, handleSubmit, reset, formState: { errors, isSubmitting } } =
     useForm<ProdutoFormData>({ defaultValues, resolver: zodResolver(produtoSchema) });
@@ -71,10 +75,10 @@ export default function EditarProdutoScreen() {
   if (!id || !getProdutoById(id)) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
       <TouchableOpacity
         onPress={() => router.push(`/produtos/movimentacoes/${id}` as never)}
-        style={styles.movementButton}>
+        style={[styles.movementButton, { backgroundColor: palette.tint }]}>
         <Text style={styles.movementButtonText}>Movimentar estoque e ver historico</Text>
       </TouchableOpacity>
       <ProdutoForm

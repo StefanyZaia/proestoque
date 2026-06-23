@@ -11,7 +11,6 @@ import { useAuth } from '@/src/contexts/AuthContext';
 import { useProducts } from '@/src/contexts/ProductsContext';
 import { ErrorView } from '@/src/components/ErrorView';
 import { ProdutoListaSkeleton } from '@/src/components/ProdutoSkeleton';
-import { useCategorias } from '@/src/hooks/useCategorias';
 import type { Produto } from '@/src/types/estoque';
 import { formatCurrency } from '@/src/utils/formatters';
 
@@ -22,7 +21,6 @@ export default function HomeScreen() {
   const colorScheme = useColorScheme();
   const { user } = useAuth();
   const { produtos, isLoading, error, carregarProdutos } = useProducts();
-  const { categorias } = useCategorias();
   const palette = Colors[colorScheme ?? 'light'];
 
   const nomeUsuario = user?.nome ?? 'Usuario';
@@ -67,18 +65,6 @@ export default function HomeScreen() {
       titulo: 'Alertas de Estoque',
       valor: produtosComEstoqueBaixo.length.toString(),
       cor: colorScheme === 'dark' ? '#5A3850' : '#F8DDE8',
-    },
-    {
-      id: 'categorias',
-      titulo: 'Categorias',
-      valor: categorias.length.toString(),
-      cor: colorScheme === 'dark' ? '#3C425F' : '#E8E1D8',
-    },
-    {
-      id: 'valor',
-      titulo: 'Valor Total',
-      valor: formatCurrency(valorTotalEstoque),
-      cor: colorScheme === 'dark' ? '#355148' : '#E6EFE4',
     },
   ];
 
@@ -143,6 +129,15 @@ export default function HomeScreen() {
                 <ThemedText style={styles.titulo}>{card.titulo}</ThemedText>
               </ThemedView>
             ))}
+            <ThemedView
+              style={[
+                styles.card,
+                styles.valorTotalCard,
+                { backgroundColor: colorScheme === 'dark' ? '#355148' : '#E6EFE4' },
+              ]}>
+              <ThemedText style={styles.valorTotal}>{formatCurrency(valorTotalEstoque)}</ThemedText>
+              <ThemedText style={styles.titulo}>Valor Total</ThemedText>
+            </ThemedView>
           </View>
 
           {produtosComEstoqueBaixo.length > 0 ? (
@@ -252,9 +247,17 @@ const styles = StyleSheet.create({
     padding: 16,
     width: '48%',
   },
+  valorTotalCard: {
+    minHeight: 88,
+    width: '100%',
+  },
   valor: {
     fontSize: 22,
     fontWeight: '700',
+  },
+  valorTotal: {
+    fontSize: 26,
+    fontWeight: '800',
   },
   titulo: {
     fontSize: 12,

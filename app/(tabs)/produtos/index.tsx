@@ -103,16 +103,22 @@ export default function ProdutosScreen() {
           { borderColor: palette.border },
           compact && styles.produtoCardCompact,
         ]}>
-        <View style={styles.produtoHeader}>
-          {item.foto ?? item.fotoUri ? (
-            <Image source={{ uri: item.foto ?? item.fotoUri }} style={styles.produtoThumb} />
-          ) : (
-            <View style={[styles.produtoThumbPlaceholder, { borderColor: palette.border }]}>
-              <ThemedText style={styles.produtoThumbPlaceholderText}>IMG</ThemedText>
-            </View>
-          )}
-          <ThemedText style={styles.produtoNome}>{item.nome}</ThemedText>
-          <View style={[styles.badge, { backgroundColor: cor }]}>
+        <View style={[styles.produtoHeader, compact && styles.produtoHeaderCompact]}>
+          <View style={[styles.produtoTitleRow, compact && styles.produtoTitleRowCompact]}>
+            {item.foto ?? item.fotoUri ? (
+              <Image source={{ uri: item.foto ?? item.fotoUri }} style={styles.produtoThumb} />
+            ) : (
+              <View style={[styles.produtoThumbPlaceholder, { borderColor: palette.border }]}>
+                <ThemedText style={styles.produtoThumbPlaceholderText}>IMG</ThemedText>
+              </View>
+            )}
+            <ThemedText
+              numberOfLines={compact ? 2 : undefined}
+              style={[styles.produtoNome, compact && styles.produtoNomeCompact]}>
+              {item.nome}
+            </ThemedText>
+          </View>
+          <View style={[styles.badge, compact && styles.badgeCompact, { backgroundColor: cor }]}>
             <ThemedText style={[styles.badgeText, { color: textoCor }]}>{status}</ThemedText>
           </View>
         </View>
@@ -397,9 +403,12 @@ const styles = StyleSheet.create({
   },
   gridRow: {
     gap: 12,
+    justifyContent: 'space-between',
   },
   gridItemWrapper: {
     flex: 1,
+    maxWidth: '48.5%',
+    minWidth: '48%',
   },
   produtoCard: {
     borderRadius: 18,
@@ -408,7 +417,8 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   produtoCardCompact: {
-    minHeight: 145,
+    minHeight: 176,
+    padding: 12,
   },
   produtoHeader: {
     alignItems: 'flex-start',
@@ -416,6 +426,20 @@ const styles = StyleSheet.create({
     gap: 8,
     justifyContent: 'space-between',
     marginBottom: 10,
+  },
+  produtoHeaderCompact: {
+    flexDirection: 'column',
+    gap: 10,
+  },
+  produtoTitleRow: {
+    alignItems: 'center',
+    flex: 1,
+    flexDirection: 'row',
+    gap: 8,
+    minWidth: 0,
+  },
+  produtoTitleRowCompact: {
+    width: '100%',
   },
   produtoThumb: {
     borderRadius: 12,
@@ -439,6 +463,11 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     fontWeight: '700',
+    minWidth: 0,
+  },
+  produtoNomeCompact: {
+    fontSize: 14,
+    lineHeight: 18,
   },
   produtoMeta: {
     fontSize: 13,
@@ -449,9 +478,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   badge: {
+    alignSelf: 'flex-start',
     borderRadius: 999,
+    flexShrink: 0,
     paddingHorizontal: 10,
     paddingVertical: 5,
+  },
+  badgeCompact: {
+    alignSelf: 'flex-start',
   },
   badgeText: {
     fontSize: 11,

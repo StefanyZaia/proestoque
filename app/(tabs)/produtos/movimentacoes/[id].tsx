@@ -2,6 +2,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, RefreshControl, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { ErrorView } from '@/src/components/ErrorView';
 import { LoadingView } from '@/src/components/LoadingView';
 import { useProducts } from '@/src/contexts/ProductsContext';
@@ -9,6 +11,8 @@ import type { Movimentacao } from '@/src/types/estoque';
 
 export default function MovimentacoesScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme ?? 'light'];
   const { getProdutoById, movimentarProduto, carregarMovimentacoes } = useProducts();
   const [tipo, setTipo] = useState<'entrada' | 'saida'>('entrada');
   const [quantidade, setQuantidade] = useState('');
@@ -62,34 +66,70 @@ export default function MovimentacoesScreen() {
     <FlatList
       data={movimentacoes}
       keyExtractor={(item) => item.id}
-      refreshControl={<RefreshControl refreshing={isLoading} onRefresh={carregar} />}
-      contentContainerStyle={styles.content}
+      refreshControl={
+        <RefreshControl refreshing={isLoading} onRefresh={carregar} tintColor={palette.tint} />
+      }
+      style={{ backgroundColor: palette.background }}
+      contentContainerStyle={[styles.content, { backgroundColor: palette.background }]}
       ListHeaderComponent={
         <View style={styles.form}>
-          <Text style={styles.title}>{produto?.nome ?? 'Produto'}</Text>
-          <Text style={styles.stock}>Estoque atual: {produto?.quantidade ?? 0} {produto?.unidade}</Text>
+          <Text style={[styles.title, { color: palette.text }]}>{produto?.nome ?? 'Produto'}</Text>
+          <Text style={[styles.stock, { color: palette.icon }]}>Estoque atual: {produto?.quantidade ?? 0} {produto?.unidade}</Text>
           <View style={styles.segmented}>
             {(['entrada', 'saida'] as const).map((option) => (
-              <TouchableOpacity key={option} onPress={() => setTipo(option)} style={[styles.segment, tipo === option && styles.segmentActive]}>
-                <Text style={[styles.segmentText, tipo === option && styles.segmentTextActive]}>{option === 'entrada' ? 'Entrada' : 'Saida'}</Text>
+              <TouchableOpacity
+                key={option}
+                onPress={() => setTipo(option)}
+                style={[
+                  styles.segment,
+                  { borderColor: palette.border },
+                  tipo === option && { backgroundColor: palette.tint, borderColor: palette.tint },
+                ]}>
+                <Text
+                  style={[
+                    styles.segmentText,
+                    { color: palette.text },
+                    tipo === option && styles.segmentTextActive,
+                  ]}>
+                  {option === 'entrada' ? 'Entrada' : 'Saida'}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
-          <TextInput value={quantidade} onChangeText={setQuantidade} keyboardType="numeric" placeholder="Quantidade" style={styles.input} />
-          <TextInput value={observacao} onChangeText={setObservacao} placeholder="Observacao (opcional)" style={styles.input} />
+          <TextInput
+            value={quantidade}
+            onChangeText={setQuantidade}
+            keyboardType="numeric"
+            placeholder="Quantidade"
+            placeholderTextColor={palette.icon}
+            style={[
+              styles.input,
+              { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+            ]}
+          />
+          <TextInput
+            value={observacao}
+            onChangeText={setObservacao}
+            placeholder="Observacao (opcional)"
+            placeholderTextColor={palette.icon}
+            style={[
+              styles.input,
+              { backgroundColor: palette.card, borderColor: palette.border, color: palette.text },
+            ]}
+          />
           <TouchableOpacity disabled={isSubmitting} onPress={() => void salvar()} style={[styles.submit, isSubmitting && styles.disabled]}>
             <Text style={styles.submitText}>{isSubmitting ? 'Registrando...' : 'Registrar movimentacao'}</Text>
           </TouchableOpacity>
-          <Text style={styles.historyTitle}>Historico</Text>
+          <Text style={[styles.historyTitle, { color: palette.text }]}>Historico</Text>
         </View>
       }
-      ListEmptyComponent={<Text style={styles.empty}>Nenhuma movimentacao registrada.</Text>}
+      ListEmptyComponent={<Text style={[styles.empty, { color: palette.icon }]}>Nenhuma movimentacao registrada.</Text>}
       renderItem={({ item }) => (
-        <View style={styles.item}>
+        <View style={[styles.item, { borderBottomColor: palette.border }]}>
           <View>
-            <Text style={styles.itemType}>{item.tipo === 'entrada' ? 'Entrada' : 'Saida'}</Text>
-            <Text style={styles.itemDate}>{new Date(item.data).toLocaleString('pt-BR')}</Text>
-            {item.observacao ? <Text style={styles.itemNote}>{item.observacao}</Text> : null}
+            <Text style={[styles.itemType, { color: palette.text }]}>{item.tipo === 'entrada' ? 'Entrada' : 'Saida'}</Text>
+            <Text style={[styles.itemDate, { color: palette.icon }]}>{new Date(item.data).toLocaleString('pt-BR')}</Text>
+            {item.observacao ? <Text style={[styles.itemNote, { color: palette.text }]}>{item.observacao}</Text> : null}
           </View>
           <Text style={[styles.quantity, item.tipo === 'entrada' ? styles.positive : styles.negative]}>
             {item.tipo === 'entrada' ? '+' : '-'}{item.quantidade}
@@ -106,8 +146,7 @@ const styles = StyleSheet.create({
   title: { color: '#3F3654', fontSize: 22, fontWeight: '700' },
   stock: { color: '#7A6C96', fontSize: 15 },
   segmented: { flexDirection: 'row', gap: 8 },
-  segment: { alignItems: 'center', borderColor: '#DECEF6', borderRadius: 8, borderWidth: 1, flex: 1, padding: 12 },
-  segmentActive: { backgroundColor: '#F4A7D8', borderColor: '#F4A7D8' },
+  segment: { alignItems: 'center', borderRadius: 8, borderWidth: 1, flex: 1, padding: 12 },
   segmentText: { color: '#3F3654', fontWeight: '600' },
   segmentTextActive: { color: '#FFFFFF' },
   input: { borderColor: '#DECEF6', borderRadius: 8, borderWidth: 1, padding: 13 },

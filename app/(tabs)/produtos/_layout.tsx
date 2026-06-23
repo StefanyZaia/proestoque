@@ -1,18 +1,22 @@
 import { Stack } from 'expo-router';
 
-import { theme } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function ProdutosStackLayout() {
+  const colorScheme = useColorScheme();
+  const palette = Colors[colorScheme ?? 'light'];
+
   return (
     <Stack
       screenOptions={{
         headerShadowVisible: false,
         headerStyle: {
-          backgroundColor: theme.colors.surface,
+          backgroundColor: palette.card,
         },
-        headerTintColor: theme.colors.primary,
+        headerTintColor: palette.tint,
         headerTitleStyle: {
-          color: theme.colors.text,
+          color: palette.text,
           fontWeight: '700',
         },
       }}>
